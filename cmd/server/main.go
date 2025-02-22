@@ -32,13 +32,13 @@ func updateHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) {
 		return
 	}
 
-	explodedUrl := strings.Split(strings.Trim(r.URL.Path, "/update/"), "/")
-	if len(explodedUrl) != 3 {
+	explodedURL := strings.Split(strings.Trim(r.URL.Path, "/update/"), "/")
+	if len(explodedURL) != 3 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	metricType, metricName, metricValue := explodedUrl[0], explodedUrl[1], explodedUrl[2]
+	metricType, metricName, metricValue := explodedURL[0], explodedURL[1], explodedURL[2]
 
 	switch metricType {
 	case "gauge":
