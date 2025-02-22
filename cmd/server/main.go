@@ -32,7 +32,7 @@ func updateHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) {
 		return
 	}
 
-	explodedURL := strings.Split(strings.Trim(r.URL.Path, "/update/"), "/")
+	explodedURL := strings.Split(strings.TrimPrefix(r.URL.Path, "/update/"), "/")
 	if len(explodedURL) != 3 {
 		w.WriteHeader(http.StatusNotFound)
 		return
