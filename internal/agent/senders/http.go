@@ -5,19 +5,19 @@ import (
 	"net/http"
 )
 
-type HttpSender struct {
+type HTTPSender struct {
 	serverAddr string
 	client     *http.Client
 }
 
-func NewHttpSender(serverAddr string, client *http.Client) *HttpSender {
-	return &HttpSender{
+func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
+	return &HTTPSender{
 		serverAddr: serverAddr,
 		client:     client,
 	}
 }
 
-func (s *HttpSender) Send(mType string, mName string, mValue string) error {
+func (s *HTTPSender) Send(mType string, mName string, mValue string) error {
 	url := fmt.Sprintf("%s/update/%s/%s/%s", s.serverAddr, mType, mName, mValue)
 	r, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -26,9 +26,15 @@ func (s *HttpSender) Send(mType string, mName string, mValue string) error {
 
 	r.Header.Set("Content-Type", "text/plain")
 
-	if _, err := s.client.Do(r); err != nil {
+	res, err := s.client.Do(r)
+	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			fmt.Println("close body error", err)
+		}
+	}()
 
 	return nil
 }

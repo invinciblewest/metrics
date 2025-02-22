@@ -17,7 +17,7 @@ const (
 func main() {
 	st := storage.NewMemStorage()
 	runtimeCollector := collectors.NewRuntimeCollector()
-	httpSender := senders.NewHttpSender(serverAddr, http.DefaultClient)
+	httpSender := senders.NewHTTPSender(serverAddr, http.DefaultClient)
 
 	for {
 		if err := collectors.CollectMetrics(st, runtimeCollector); err != nil {
