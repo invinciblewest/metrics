@@ -16,19 +16,33 @@ const (
 
 func main() {
 	st := storage.NewMemStorage()
-	runtimeCollector := collectors.NewRuntimeCollector()
-	httpSender := senders.NewHTTPSender(serverAddr, http.DefaultClient)
+	collectorsList := []collectors.Collector{
+		collectors.NewRuntimeCollector(),
+	}
+	sendersList := []senders.Sender{
+		senders.NewHTTPSender(serverAddr, http.DefaultClient),
+	}
 
+	runAgent(st, collectorsList, sendersList, pollInterval, reportInterval)
+}
+
+func runAgent(
+	st *storage.MemStorage,
+	c []collectors.Collector,
+	s []senders.Sender,
+	pInterval int,
+	rInterval int,
+) {
 	for {
-		if err := collectors.CollectMetrics(st, runtimeCollector); err != nil {
+		if err := collectors.CollectMetrics(st, c...); err != nil {
 			panic(err)
 		}
 
-		if ((st.GetCounter("PollCount") * pollInterval) % reportInterval) == 0 {
-			if err := senders.SendMetrics(st, httpSender); err != nil {
+		if ((int(st.GetCounter("PollCount")) * pInterval) % rInterval) == 0 {
+			if err := senders.SendMetrics(st, s...); err != nil {
 				panic(err)
 			}
 		}
-		time.Sleep(pollInterval * time.Second)
+		time.Sleep(time.Duration(pInterval) * time.Second)
 	}
 }

@@ -31,9 +31,7 @@ func (s *HTTPSender) Send(mType string, mName string, mValue string) error {
 		return err
 	}
 	defer func() {
-		if err := res.Body.Close(); err != nil {
-			fmt.Println("close body error", err)
-		}
+		_ = res.Body.Close()
 	}()
 
 	return nil
