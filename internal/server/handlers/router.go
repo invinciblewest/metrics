@@ -16,6 +16,9 @@ func GetRouter(st storage.Storage) http.Handler {
 	r.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, req *http.Request) {
 		UpdateMetricHandler(w, req, st)
 	})
+	r.Get("/value/{type}/{name}", func(w http.ResponseWriter, req *http.Request) {
+		GetMetricHandler(w, req, st)
+	})
 
 	return r
 }

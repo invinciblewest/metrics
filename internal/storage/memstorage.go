@@ -1,5 +1,7 @@
 package storage
 
+import "errors"
+
 type MemStorage struct {
 	gauges   GaugeList
 	counters CounterList
@@ -16,8 +18,13 @@ func (st *MemStorage) UpdateGauge(name string, value float64) {
 	st.gauges[name] = value
 }
 
-func (st *MemStorage) GetGauge(name string) float64 {
-	return st.gauges[name]
+func (st *MemStorage) GetGauge(name string) (float64, error) {
+	value, exists := st.gauges[name]
+	if exists {
+		return value, nil
+	} else {
+		return 0, errors.New("not found")
+	}
 }
 
 func (st *MemStorage) GetGaugeList() GaugeList {
@@ -32,6 +39,11 @@ func (st *MemStorage) GetCounterList() CounterList {
 	return st.counters
 }
 
-func (st *MemStorage) GetCounter(name string) int64 {
-	return st.counters[name]
+func (st *MemStorage) GetCounter(name string) (int64, error) {
+	value, exists := st.counters[name]
+	if exists {
+		return value, nil
+	} else {
+		return 0, errors.New("not found")
+	}
 }

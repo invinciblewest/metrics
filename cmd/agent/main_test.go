@@ -37,5 +37,7 @@ func TestRunAgent(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	assert.Equal(t, int64(2), st.GetCounter("PollCount"))
+	pc, err := st.GetCounter("PollCount")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), pc)
 }

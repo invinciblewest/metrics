@@ -24,8 +24,14 @@ func TestMemStorage_Gauge(t *testing.T) {
 	})
 	t.Run("get gauge", func(t *testing.T) {
 		for k, v := range list {
-			assert.Equal(t, v, st.GetGauge(k))
+			val, err := st.GetGauge(k)
+			assert.NoError(t, err)
+			assert.Equal(t, v, val)
 		}
+	})
+	t.Run("get gauge error", func(t *testing.T) {
+		_, err := st.GetGauge("unknown")
+		assert.Error(t, err)
 	})
 	t.Run("get gauge list", func(t *testing.T) {
 		assert.Equal(t, list, st.GetGaugeList())
@@ -46,8 +52,14 @@ func TestMemStorage_Counter(t *testing.T) {
 	})
 	t.Run("get counter", func(t *testing.T) {
 		for k, v := range list {
-			assert.Equal(t, v, st.GetCounter(k))
+			val, err := st.GetCounter(k)
+			assert.NoError(t, err)
+			assert.Equal(t, v, val)
 		}
+	})
+	t.Run("get counter error", func(t *testing.T) {
+		_, err := st.GetCounter("unknown")
+		assert.Error(t, err)
 	})
 	t.Run("get counter list", func(t *testing.T) {
 		assert.Equal(t, list, st.GetCounterList())
@@ -59,7 +71,9 @@ func TestMemStorage_Counter(t *testing.T) {
 	})
 	t.Run("get counter after increment", func(t *testing.T) {
 		for k, v := range list {
-			assert.Equal(t, v*2, st.GetCounter(k))
+			val, err := st.GetCounter(k)
+			assert.NoError(t, err)
+			assert.Equal(t, v*2, val)
 		}
 	})
 }

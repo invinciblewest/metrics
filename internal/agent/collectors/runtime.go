@@ -47,6 +47,10 @@ func (c *RuntimeCollector) Collect(st *storage.MemStorage) error {
 	st.UpdateGauge("RandomValue", rand.Float64())
 	st.UpdateCounter("PollCount", 1)
 
-	fmt.Printf("runtimeCollector: poll #%d is collected\r\n", st.GetCounter("PollCount"))
+	pc, err := st.GetCounter("PollCount")
+	if err != nil {
+		return err
+	}
+	fmt.Printf("runtimeCollector: poll #%d is collected\r\n", pc)
 	return nil
 }

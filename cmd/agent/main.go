@@ -38,7 +38,8 @@ func runAgent(
 			panic(err)
 		}
 
-		if ((int(st.GetCounter("PollCount")) * pInterval) % rInterval) == 0 {
+		pc, _ := st.GetCounter("PollCount")
+		if ((int(pc) * pInterval) % rInterval) == 0 {
 			if err := senders.SendMetrics(st, s...); err != nil {
 				panic(err)
 			}

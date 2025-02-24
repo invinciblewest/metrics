@@ -76,3 +76,65 @@ func TestUpdateMetricHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetMetricHandler(t *testing.T) {
+	st := storage.NewMemStorage()
+	st.UpdateGauge("testG", 3.14)
+	st.UpdateCounter("testC", 314)
+
+	s := httptest.NewServer(GetRouter(st))
+	defer s.Close()
+
+	tests := []struct {
+		name         string
+		target       string
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			name:         "type not found",
+			target:       "/value/unknown/test",
+			expectedCode: http.StatusNotFound,
+			expectedBody: "",
+		},
+		{
+			name:         "gauge not found",
+			target:       "/value/gauge/unknown",
+			expectedCode: http.StatusNotFound,
+			expectedBody: "",
+		},
+		{
+			name:         "counter not found",
+			target:       "/value/counter/unknown",
+			expectedCode: http.StatusNotFound,
+			expectedBody: "",
+		},
+		{
+			name:         "gauge success",
+			target:       "/value/gauge/testG",
+			expectedCode: http.StatusOK,
+			expectedBody: "3.14",
+		},
+		{
+			name:         "counter success",
+			target:       "/value/counter/testC",
+			expectedCode: http.StatusOK,
+			expectedBody: "314",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := resty.New().R()
+			req.Method = http.MethodGet
+			req.URL = s.URL + test.target
+
+			resp, err := req.Send()
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedCode, resp.StatusCode())
+			if test.expectedBody != "" {
+				assert.Equal(t, test.expectedBody, string(resp.Body()))
+			}
+		})
+	}
+}

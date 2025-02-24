@@ -41,3 +41,30 @@ func UpdateMetricHandler(w http.ResponseWriter, r *http.Request, st storage.Stor
 		return
 	}
 }
+
+func GetMetricHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) {
+	mType := chi.URLParam(r, "type")
+	mName := chi.URLParam(r, "name")
+
+	if mName == "" || mType != "gauge" && mType != "counter" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	switch mType {
+	case "gauge":
+		v, err := st.GetGauge(mName)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		_, _ = w.Write([]byte(strconv.FormatFloat(v, 'f', -1, 64)))
+	default:
+		v, err := st.GetCounter(mName)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		_, _ = w.Write([]byte(strconv.FormatInt(v, 10)))
+	}
+}
