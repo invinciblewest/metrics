@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/go-resty/resty/v2"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -19,13 +20,13 @@ func TestUpdateMetricHandler(t *testing.T) {
 			name:   "method not allowed",
 			method: http.MethodGet,
 			code:   http.StatusMethodNotAllowed,
-			target: "/update/",
+			target: "/update/gauge/test/3.14",
 		},
 		{
 			name:   "not found",
 			method: http.MethodPost,
 			code:   http.StatusNotFound,
-			target: "/update/123",
+			target: "/update/gauge//3.14",
 		},
 		{
 			name:   "gauge error",
@@ -60,14 +61,18 @@ func TestUpdateMetricHandler(t *testing.T) {
 	}
 
 	st := storage.NewMemStorage()
+	s := httptest.NewServer(GetRouter(st))
+	defer s.Close()
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := httptest.NewRequest(test.method, test.target, nil)
-			w := httptest.NewRecorder()
+			req := resty.New().R()
+			req.Method = test.method
+			req.URL = s.URL + test.target
 
-			UpdateMetricHandler(w, r, st)
-
-			assert.Equal(t, test.code, w.Code)
+			resp, err := req.Send()
+			assert.NoError(t, err)
+			assert.Equal(t, test.code, resp.StatusCode())
 		})
 	}
 }

@@ -17,13 +17,8 @@ func main() {
 }
 
 func run(addr string, st storage.Storage) error {
-	mux := http.NewServeMux()
-
-	mux.Handle("/update/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r.URL.Path)
-		handlers.UpdateMetricHandler(w, r, st)
-	}))
+	r := handlers.GetRouter(st)
 
 	fmt.Println("Server is starting...")
-	return http.ListenAndServe(addr, mux)
+	return http.ListenAndServe(addr, r)
 }

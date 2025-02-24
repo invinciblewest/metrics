@@ -1,8 +1,11 @@
 package senders
 
 import (
+	"github.com/invinciblewest/metrics/internal/server/handlers"
+	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -23,17 +26,10 @@ func TestHTTPSender_Send(t *testing.T) {
 		assert.Error(t, err)
 	})
 	t.Run("success", func(t *testing.T) {
-		server := &http.Server{Addr: ":8080", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})}
-		go func() {
-			_ = server.ListenAndServe()
-		}()
-		defer func() {
-			_ = server.Close()
-		}()
-
-		s := createSender("http://localhost:8080")
+		st := storage.NewMemStorage()
+		srv := httptest.NewServer(handlers.GetRouter(st))
+		defer srv.Close()
+		s := createSender(srv.URL)
 		err := s.Send("gauge", "test", "3.14")
 		assert.NoError(t, err)
 	})

@@ -1,25 +1,26 @@
 package handlers
 
 import (
+	"github.com/go-chi/chi/v5"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 func UpdateMetricHandler(w http.ResponseWriter, r *http.Request, st storage.Storage) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+	metricType := chi.URLParam(r, "type")
+	metricName := chi.URLParam(r, "name")
+	metricValue := chi.URLParam(r, "value")
 
-	explodedURL := strings.Split(strings.TrimPrefix(r.URL.Path, "/update/"), "/")
-	if len(explodedURL) != 3 {
+	if metricName == "" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	metricType, metricName, metricValue := explodedURL[0], explodedURL[1], explodedURL[2]
+	if metricType != "gauge" && metricType != "counter" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	switch metricType {
 	case "gauge":
@@ -30,16 +31,13 @@ func UpdateMetricHandler(w http.ResponseWriter, r *http.Request, st storage.Stor
 		}
 		st.UpdateGauge(metricName, value)
 		return
-	case "counter":
+	default:
 		value, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		st.UpdateCounter(metricName, value)
-		return
-	default:
-		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 }
