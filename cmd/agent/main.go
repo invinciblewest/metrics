@@ -1,8 +1,7 @@
 package main
 
 import (
-	"flag"
-	"github.com/caarlos0/env/v6"
+	"github.com/invinciblewest/metrics/internal/agent"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/senders"
 	"github.com/invinciblewest/metrics/internal/storage"
@@ -17,37 +16,19 @@ type AgentConfig struct {
 }
 
 func main() {
-	serverAddr := flag.String("a", "localhost:8080", "server address")
-	pollInterval := flag.Int("p", 2, "poll interval (sec)")
-	reportInterval := flag.Int("r", 10, "report interval (sec)")
-	flag.Parse()
-
-	var config AgentConfig
-	if err := env.Parse(&config); err != nil {
-		panic(err)
-	}
-
-	if config.address != "" {
-		serverAddr = &config.address
-	}
-	if config.pollInterval != 0 {
-		pollInterval = &config.pollInterval
-	}
-	if config.reportInterval != 0 {
-		reportInterval = &config.reportInterval
-	}
+	cfg := agent.GetConfig()
 
 	st := storage.NewMemStorage()
 	collectorsList := []collectors.Collector{
 		collectors.NewRuntimeCollector(),
 	}
 
-	addr := "http://" + *serverAddr
+	addr := "http://" + cfg.Address
 	sendersList := []senders.Sender{
 		senders.NewHTTPSender(addr, http.DefaultClient),
 	}
 
-	runAgent(st, collectorsList, sendersList, *pollInterval, *reportInterval)
+	runAgent(st, collectorsList, sendersList, cfg.PollInterval, cfg.ReportInterval)
 }
 
 func runAgent(
