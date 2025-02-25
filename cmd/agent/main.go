@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/senders"
 	"github.com/invinciblewest/metrics/internal/storage"
@@ -8,22 +9,22 @@ import (
 	"time"
 )
 
-const (
-	pollInterval   = 2
-	reportInterval = 10
-	serverAddr     = "http://localhost:8080"
-)
-
 func main() {
+	serverAddr := flag.String("a", "localhost:8080", "server address")
+	pollInterval := flag.Int("p", 2, "poll interval (sec)")
+	reportInterval := flag.Int("r", 10, "report interval (sec)")
+
+	flag.Parse()
+
 	st := storage.NewMemStorage()
 	collectorsList := []collectors.Collector{
 		collectors.NewRuntimeCollector(),
 	}
 	sendersList := []senders.Sender{
-		senders.NewHTTPSender(serverAddr, http.DefaultClient),
+		senders.NewHTTPSender(*serverAddr, http.DefaultClient),
 	}
 
-	runAgent(st, collectorsList, sendersList, pollInterval, reportInterval)
+	runAgent(st, collectorsList, sendersList, *pollInterval, *reportInterval)
 }
 
 func runAgent(

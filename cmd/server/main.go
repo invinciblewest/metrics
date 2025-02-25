@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
 	"github.com/invinciblewest/metrics/internal/storage"
@@ -8,9 +9,11 @@ import (
 )
 
 func main() {
+	serverAddr := flag.String("a", "localhost:8080", "server address")
+
 	st := storage.NewMemStorage()
 
-	err := run(":8080", st)
+	err := run(*serverAddr, st)
 	if err != nil {
 		panic(err)
 	}
