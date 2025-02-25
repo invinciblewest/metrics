@@ -20,7 +20,7 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 
 func (s *HTTPSender) Send(mType string, mName string, mValue string) error {
 	r := resty.New().R()
-	r.URL = fmt.Sprintf("http://%s/update/%s/%s/%s", s.serverAddr, mType, mName, mValue)
+	r.URL = fmt.Sprintf("%s/update/%s/%s/%s", s.serverAddr, mType, mName, mValue)
 	r.Header.Set("Content-Type", "text/plain")
 	_, err := r.Send()
 	if err != nil {

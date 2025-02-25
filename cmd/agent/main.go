@@ -20,8 +20,10 @@ func main() {
 	collectorsList := []collectors.Collector{
 		collectors.NewRuntimeCollector(),
 	}
+
+	addr := "http://" + *serverAddr
 	sendersList := []senders.Sender{
-		senders.NewHTTPSender(*serverAddr, http.DefaultClient),
+		senders.NewHTTPSender(addr, http.DefaultClient),
 	}
 
 	runAgent(st, collectorsList, sendersList, *pollInterval, *reportInterval)
