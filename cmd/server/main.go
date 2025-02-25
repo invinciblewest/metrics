@@ -10,6 +10,7 @@ import (
 
 func main() {
 	serverAddr := flag.String("a", "localhost:8080", "server address")
+	flag.Parse()
 
 	st := storage.NewMemStorage()
 
