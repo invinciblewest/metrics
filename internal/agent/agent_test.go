@@ -1,4 +1,4 @@
-package main
+package agent
 
 import (
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
@@ -22,7 +22,7 @@ func (s *MockSender) Send(mType string, mName string, mValue string) error {
 	return nil
 }
 
-func TestRunAgent(t *testing.T) {
+func TestNewAgent(t *testing.T) {
 	st := storage.NewMemStorage()
 	collectorsList := []collectors.Collector{
 		&MockCollector{},
@@ -32,7 +32,9 @@ func TestRunAgent(t *testing.T) {
 	}
 
 	go func() {
-		runAgent(st, collectorsList, sendersList, 1, 2)
+		agent := NewAgent(st, collectorsList, sendersList, 1, 2)
+		err := agent.Run()
+		assert.NoError(t, err)
 	}()
 
 	time.Sleep(1 * time.Second)

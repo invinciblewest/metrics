@@ -1,8 +1,8 @@
 package senders
 
 import (
-	"fmt"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"log"
 	"strconv"
 )
 
@@ -11,7 +11,7 @@ type Sender interface {
 }
 
 func SendMetrics(st *storage.MemStorage, senders ...Sender) error {
-	fmt.Println("sending metrics to server...")
+	log.Println("sending metrics to server...")
 	for _, s := range senders {
 		for k, v := range st.GetGaugeList() {
 			val := strconv.FormatFloat(v, 'f', -1, 64)
@@ -26,6 +26,6 @@ func SendMetrics(st *storage.MemStorage, senders ...Sender) error {
 			}
 		}
 	}
-	fmt.Println("metrics have been sent")
+	log.Println("metrics have been sent")
 	return nil
 }

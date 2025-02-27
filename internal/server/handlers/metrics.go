@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -58,13 +59,21 @@ func GetMetricHandler(w http.ResponseWriter, r *http.Request, st storage.Storage
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		_, _ = w.Write([]byte(strconv.FormatFloat(v, 'f', -1, 64)))
+		_, err = w.Write([]byte(strconv.FormatFloat(v, 'f', -1, 64)))
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	default:
 		v, err := st.GetCounter(mName)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		_, _ = w.Write([]byte(strconv.FormatInt(v, 10)))
+		_, err = w.Write([]byte(strconv.FormatInt(v, 10)))
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 }

@@ -2,29 +2,38 @@ package senders
 
 import (
 	"errors"
-	"fmt"
 	"github.com/go-resty/resty/v2"
 	"net/http"
+	"net/url"
 )
 
 type HTTPSender struct {
 	serverAddr string
-	client     *http.Client
+	client     *resty.Client
 }
 
 func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
+	restyClient := resty.New()
+	if client != nil {
+		restyClient.SetTransport(client.Transport)
+	}
+
 	return &HTTPSender{
 		serverAddr: serverAddr,
-		client:     client,
+		client:     restyClient,
 	}
 }
 
 func (s *HTTPSender) Send(mType string, mName string, mValue string) error {
-	r := resty.New().R()
-	r.Method = http.MethodPost
-	r.URL = fmt.Sprintf("%s/update/%s/%s/%s", s.serverAddr, mType, mName, mValue)
-	r.Header.Set("Content-Type", "text/plain")
-	resp, err := r.Send()
+	path, err := url.JoinPath(s.serverAddr, "update", mType, mName, mValue)
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.client.R().
+		SetHeader("Content-Type", "text/plain").
+		Post(path)
+
 	if err != nil {
 		return err
 	}

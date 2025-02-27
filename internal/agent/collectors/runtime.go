@@ -1,8 +1,8 @@
 package collectors
 
 import (
-	"fmt"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"log"
 	"math/rand"
 	"runtime"
 )
@@ -14,7 +14,7 @@ func NewRuntimeCollector() *RuntimeCollector {
 }
 
 func (c *RuntimeCollector) Collect(st *storage.MemStorage) error {
-	fmt.Println("runtimeCollector: collecting metrics...")
+	log.Println("runtimeCollector: collecting metrics...")
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	st.UpdateGauge("Alloc", float64(memStats.Alloc))
@@ -51,6 +51,6 @@ func (c *RuntimeCollector) Collect(st *storage.MemStorage) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("runtimeCollector: poll #%d is collected\r\n", pc)
+	log.Printf("runtimeCollector: poll #%d is collected\r\n", pc)
 	return nil
 }

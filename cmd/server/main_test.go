@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/invinciblewest/metrics/internal/server"
+	"github.com/invinciblewest/metrics/internal/server/config"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -11,7 +11,7 @@ import (
 
 func TestRun(t *testing.T) {
 	st := storage.NewMemStorage()
-	cfg := server.GetConfig()
+	cfg := config.GetConfig()
 
 	go func() {
 		err := run(cfg.Address, st)

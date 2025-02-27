@@ -1,26 +1,25 @@
 package main
 
 import (
-	"fmt"
-	"github.com/invinciblewest/metrics/internal/server"
+	"github.com/invinciblewest/metrics/internal/server/config"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"log"
 	"net/http"
 )
 
 func main() {
-	cfg := server.GetConfig()
+	cfg := config.GetConfig()
 	st := storage.NewMemStorage()
 
-	err := run(cfg.Address, st)
-	if err != nil {
-		panic(err)
+	if err := run(cfg.Address, st); err != nil {
+		log.Fatal(err)
 	}
 }
 
 func run(addr string, st storage.Storage) error {
 	r := handlers.GetRouter(st)
 
-	fmt.Println("Server is starting...")
+	log.Println("Server is starting...")
 	return http.ListenAndServe(addr, r)
 }
