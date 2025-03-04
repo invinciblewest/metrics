@@ -10,7 +10,7 @@ type Sender interface {
 	Send(mType string, mName string, mValue string) error
 }
 
-func SendMetrics(st *storage.MemStorage, senders ...Sender) error {
+func SendMetrics(st storage.Storage, senders ...Sender) error {
 	log.Println("sending metrics to server...")
 	for _, s := range senders {
 		for k, v := range st.GetGaugeList() {

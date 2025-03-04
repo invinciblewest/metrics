@@ -8,16 +8,17 @@ import (
 )
 
 func TestNewRuntimeCollector(t *testing.T) {
-	c := NewRuntimeCollector()
+	st := storage.NewMemStorage()
+	c := NewRuntimeCollector(st)
 	assert.Implements(t, (*Collector)(nil), c)
 }
 
 func TestRuntimeCollector_Collect(t *testing.T) {
-	c := NewRuntimeCollector()
 	st := storage.NewMemStorage()
+	c := NewRuntimeCollector(st)
 
 	t.Run("collect error", func(t *testing.T) {
-		err := c.Collect(st)
+		err := c.Collect()
 		require.NoError(t, err)
 	})
 

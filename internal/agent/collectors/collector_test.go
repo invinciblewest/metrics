@@ -9,20 +9,20 @@ import (
 
 type TestCollector struct{}
 
-func (c *TestCollector) Collect(st *storage.MemStorage) error {
+func (c *TestCollector) Collect() error {
 	return errors.New("123")
 }
 
 func TestCollectMetrics(t *testing.T) {
 	st := storage.NewMemStorage()
 	t.Run("success", func(t *testing.T) {
-		c := NewRuntimeCollector()
+		c := NewRuntimeCollector(st)
 
-		err := CollectMetrics(st, c)
+		err := CollectMetrics(c)
 		assert.NoError(t, err)
 	})
 	t.Run("error", func(t *testing.T) {
-		err := CollectMetrics(st, &TestCollector{})
+		err := CollectMetrics(&TestCollector{})
 		assert.Error(t, err)
 	})
 

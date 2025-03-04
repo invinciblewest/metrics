@@ -9,10 +9,12 @@ import (
 	"time"
 )
 
-type MockCollector struct{}
+type MockCollector struct {
+	st storage.Storage
+}
 
-func (c *MockCollector) Collect(st *storage.MemStorage) error {
-	st.UpdateCounter("PollCount", 1)
+func (c *MockCollector) Collect() error {
+	c.st.UpdateCounter("PollCount", 1)
 	return nil
 }
 
@@ -25,7 +27,9 @@ func (s *MockSender) Send(mType string, mName string, mValue string) error {
 func TestNewAgent(t *testing.T) {
 	st := storage.NewMemStorage()
 	collectorsList := []collectors.Collector{
-		&MockCollector{},
+		&MockCollector{
+			st: st,
+		},
 	}
 	sendersList := []senders.Sender{
 		&MockSender{},

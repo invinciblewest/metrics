@@ -11,11 +11,14 @@ import (
 )
 
 func main() {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	st := storage.NewMemStorage()
 	collectorsList := []collectors.Collector{
-		collectors.NewRuntimeCollector(),
+		collectors.NewRuntimeCollector(st),
 	}
 
 	addr := "http://" + cfg.Address

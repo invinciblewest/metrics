@@ -9,7 +9,10 @@ import (
 )
 
 func main() {
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 	st := storage.NewMemStorage()
 
 	if err := run(cfg.Address, st); err != nil {

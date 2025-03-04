@@ -8,38 +8,38 @@ import (
 )
 
 type Agent struct {
-	st        *storage.MemStorage
-	c         []collectors.Collector
-	s         []senders.Sender
-	pInterval int
-	rInterval int
+	st         storage.Storage
+	collectors []collectors.Collector
+	senders    []senders.Sender
+	pInterval  int
+	rInterval  int
 }
 
 func NewAgent(
-	st *storage.MemStorage,
-	c []collectors.Collector,
-	s []senders.Sender,
+	st storage.Storage,
+	collectors []collectors.Collector,
+	senders []senders.Sender,
 	pInterval int,
 	rInterval int,
 ) *Agent {
 	return &Agent{
-		st:        st,
-		c:         c,
-		s:         s,
-		pInterval: pInterval,
-		rInterval: rInterval,
+		st:         st,
+		collectors: collectors,
+		senders:    senders,
+		pInterval:  pInterval,
+		rInterval:  rInterval,
 	}
 }
 
 func (a *Agent) Run() error {
 	for {
-		if err := collectors.CollectMetrics(a.st, a.c...); err != nil {
+		if err := collectors.CollectMetrics(a.collectors...); err != nil {
 			return err
 		}
 
 		pc, _ := a.st.GetCounter("PollCount")
 		if ((int(pc) * a.pInterval) % a.rInterval) == 0 {
-			if err := senders.SendMetrics(a.st, a.s...); err != nil {
+			if err := senders.SendMetrics(a.st, a.senders...); err != nil {
 				return err
 			}
 		}

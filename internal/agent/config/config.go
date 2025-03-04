@@ -11,7 +11,7 @@ type Config struct {
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 }
 
-func GetConfig() Config {
+func GetConfig() (Config, error) {
 	var config Config
 
 	flag.StringVar(&config.Address, "a", "localhost:8080", "server address")
@@ -19,7 +19,9 @@ func GetConfig() Config {
 	flag.IntVar(&config.ReportInterval, "r", 10, "report interval (sec)")
 	flag.Parse()
 
-	_ = env.Parse(&config)
+	if err := env.Parse(&config); err != nil {
+		return Config{}, err
+	}
 
-	return config
+	return config, nil
 }
