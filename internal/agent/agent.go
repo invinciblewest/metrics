@@ -37,7 +37,10 @@ func (a *Agent) Run() error {
 			return err
 		}
 
-		pc, _ := a.st.GetCounter("PollCount")
+		pc, err := a.st.GetCounter("PollCount")
+		if err != nil {
+			return err
+		}
 		if ((int(pc) * a.pInterval) % a.rInterval) == 0 {
 			if err := senders.SendMetrics(a.st, a.senders...); err != nil {
 				return err
