@@ -24,6 +24,9 @@ func TestMiddleware(t *testing.T) {
 
 	handler.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+	res := w.Result()
+	defer res.Body.Close()
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Equal(t, 2, w.Body.Len())
 }
