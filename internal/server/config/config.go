@@ -6,11 +6,13 @@ import (
 )
 
 type Config struct {
-	Address string `env:"ADDRESS"`
+	Address  string `env:"ADDRESS"`
+	LogLevel string `env:"LOG_LEVEL"`
 }
 
 func GetConfig() (Config, error) {
 	serverAddr := flag.String("a", "localhost:8080", "server address")
+	logLevel := flag.String("l", "info", "log level")
 	flag.Parse()
 
 	var config Config
@@ -20,6 +22,10 @@ func GetConfig() (Config, error) {
 
 	if config.Address == "" {
 		config.Address = *serverAddr
+	}
+
+	if config.LogLevel == "" {
+		config.LogLevel = *logLevel
 	}
 
 	return config, nil

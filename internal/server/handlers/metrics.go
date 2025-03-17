@@ -30,6 +30,8 @@ func (h *MetricsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *MetricsHandler) Get(w http.ResponseWriter, r *http.Request) {

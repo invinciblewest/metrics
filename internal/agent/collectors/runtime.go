@@ -1,8 +1,9 @@
 package collectors
 
 import (
+	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/storage"
-	"log"
+	"go.uber.org/zap"
 	"math/rand"
 	"runtime"
 )
@@ -18,7 +19,9 @@ func NewRuntimeCollector(st storage.Storage) *RuntimeCollector {
 }
 
 func (c *RuntimeCollector) Collect() error {
-	log.Println("runtimeCollector: collecting metrics...")
+	logger.Log.Info("collecting metrics...",
+		zap.String("collector", "runtime"),
+	)
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	c.st.UpdateGauge("Alloc", float64(memStats.Alloc))
@@ -55,6 +58,9 @@ func (c *RuntimeCollector) Collect() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("runtimeCollector: poll #%d is collected\r\n", pc)
+	logger.Log.Info("poll is collected",
+		zap.String("collector", "runtime"),
+		zap.Int64("poll", pc),
+	)
 	return nil
 }
