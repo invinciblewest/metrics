@@ -5,6 +5,7 @@ import (
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/config"
 	"github.com/invinciblewest/metrics/internal/agent/senders"
+	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"log"
 	"net/http"
@@ -12,6 +13,11 @@ import (
 
 func main() {
 	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = logger.Initialize(cfg.LogLevel)
 	if err != nil {
 		log.Fatal(err)
 	}
