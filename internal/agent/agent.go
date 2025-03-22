@@ -41,7 +41,7 @@ func (a *Agent) Run() error {
 		if err != nil {
 			return err
 		}
-		if ((int(pc) * a.pInterval) % a.rInterval) == 0 {
+		if ((int(*pc.Delta) * a.pInterval) % a.rInterval) == 0 {
 			if err := senders.SendMetrics(a.st, a.senders...); err != nil {
 				return err
 			}
