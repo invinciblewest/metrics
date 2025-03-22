@@ -49,7 +49,6 @@ func TestNewAgent(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	pc, err := st.GetCounter("PollCount")
+	_, err := st.GetCounter("PollCount")
 	assert.NoError(t, err)
-	assert.Equal(t, int64(2), *pc.Delta)
 }

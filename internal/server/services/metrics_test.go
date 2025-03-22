@@ -17,7 +17,7 @@ func TestNewMetricsService(t *testing.T) {
 func TestMetricsService_Update(t *testing.T) {
 	tests := []struct {
 		name        string
-		metricId    string
+		metricID    string
 		metricType  string
 		delta       int64
 		value       float64
@@ -25,20 +25,20 @@ func TestMetricsService_Update(t *testing.T) {
 	}{
 		{
 			name:        "type error",
-			metricId:    "test",
+			metricID:    "test",
 			metricType:  "test",
 			expectError: true,
 		},
 		{
 			name:        "gauge success",
-			metricId:    "test",
+			metricID:    "test",
 			metricType:  models.TypeGauge,
 			value:       3.14,
 			expectError: false,
 		},
 		{
 			name:        "counter success",
-			metricId:    "test",
+			metricID:    "test",
 			metricType:  models.TypeCounter,
 			delta:       314,
 			expectError: false,
@@ -51,7 +51,7 @@ func TestMetricsService_Update(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			metrics := models.Metrics{
-				ID:    test.metricId,
+				ID:    test.metricID,
 				MType: test.metricType,
 				Delta: &test.delta,
 				Value: &test.value,
@@ -73,7 +73,7 @@ func TestMetricsService_Get(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		metricId      string
+		metricID      string
 		metricType    string
 		expectedDelta int64
 		expectedValue float64
@@ -81,32 +81,32 @@ func TestMetricsService_Get(t *testing.T) {
 	}{
 		{
 			name:        "type error",
-			metricId:    "unknown",
+			metricID:    "unknown",
 			metricType:  "unknown",
 			expectError: true,
 		},
 		{
 			name:        "gauge not found",
-			metricId:    "unknown",
+			metricID:    "unknown",
 			metricType:  models.TypeGauge,
 			expectError: true,
 		},
 		{
 			name:          "gauge success",
-			metricId:      "testG",
+			metricID:      "testG",
 			metricType:    models.TypeGauge,
 			expectedValue: expectedValue,
 			expectError:   false,
 		},
 		{
 			name:        "counter not found",
-			metricId:    "unknown",
+			metricID:    "unknown",
 			metricType:  models.TypeCounter,
 			expectError: true,
 		},
 		{
 			name:          "counter success",
-			metricId:      "testC",
+			metricID:      "testC",
 			metricType:    models.TypeCounter,
 			expectedDelta: expectedDelta,
 			expectError:   false,
@@ -128,7 +128,7 @@ func TestMetricsService_Get(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := service.Get(test.metricType, test.metricId)
+			result, err := service.Get(test.metricType, test.metricID)
 			if test.expectError {
 				assert.Error(t, err)
 			} else {
