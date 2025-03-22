@@ -3,9 +3,11 @@ package senders
 import (
 	"errors"
 	"github.com/go-resty/resty/v2"
+	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type HTTPSender struct {
@@ -18,6 +20,18 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 	if client != nil {
 		restyClient.SetTransport(client.Transport)
 	}
+
+	restyClient.
+		SetRetryCount(3).
+		SetRetryWaitTime(1 * time.Second).
+		AddRetryCondition(
+			func(r *resty.Response, err error) bool {
+				return err != nil || r.StatusCode() >= http.StatusInternalServerError
+			},
+		).
+		AddRetryHook(func(r *resty.Response, err error) {
+			logger.Log.Info("retrying request...")
+		})
 
 	return &HTTPSender{
 		serverAddr: serverAddr,
