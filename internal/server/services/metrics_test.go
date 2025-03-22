@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -15,44 +17,30 @@ func TestNewMetricsService(t *testing.T) {
 func TestMetricsService_Update(t *testing.T) {
 	tests := []struct {
 		name        string
+		metricId    string
 		metricType  string
-		metricName  string
-		metricValue string
+		delta       int64
+		value       float64
 		expectError bool
 	}{
 		{
 			name:        "type error",
+			metricId:    "test",
 			metricType:  "test",
-			metricName:  "test",
-			metricValue: "1",
-			expectError: true,
-		},
-		{
-			name:        "parse gauge error",
-			metricType:  "gauge",
-			metricName:  "testG",
-			metricValue: "asd",
 			expectError: true,
 		},
 		{
 			name:        "gauge success",
-			metricType:  "gauge",
-			metricName:  "testG",
-			metricValue: "3.14",
+			metricId:    "test",
+			metricType:  models.TypeGauge,
+			value:       3.14,
 			expectError: false,
 		},
 		{
-			name:        "parse counter error",
-			metricType:  "counter",
-			metricName:  "testC",
-			metricValue: "asd",
-			expectError: true,
-		},
-		{
 			name:        "counter success",
-			metricType:  "counter",
-			metricName:  "testC",
-			metricValue: "314",
+			metricId:    "test",
+			metricType:  models.TypeCounter,
+			delta:       314,
 			expectError: false,
 		},
 	}
@@ -62,7 +50,14 @@ func TestMetricsService_Update(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := service.Update(test.metricType, test.metricName, test.metricValue)
+			metrics := models.Metrics{
+				ID:    test.metricId,
+				MType: test.metricType,
+				Delta: &test.delta,
+				Value: &test.value,
+			}
+			fmt.Printf("obj: %+v\n", metrics)
+			_, err := service.Update(metrics)
 			if test.expectError {
 				assert.Error(t, err)
 			} else {
@@ -72,64 +67,78 @@ func TestMetricsService_Update(t *testing.T) {
 	}
 }
 
-func TestMetricsService_GetString(t *testing.T) {
+func TestMetricsService_Get(t *testing.T) {
+	expectedValue := 3.14
+	expectedDelta := int64(314)
+
 	tests := []struct {
-		name           string
-		metricType     string
-		metricName     string
-		expectedResult string
-		expectError    bool
+		name          string
+		metricId      string
+		metricType    string
+		expectedDelta int64
+		expectedValue float64
+		expectError   bool
 	}{
 		{
-			name:           "type error",
-			metricType:     "unknown",
-			metricName:     "unknown",
-			expectedResult: "",
-			expectError:    true,
+			name:        "type error",
+			metricId:    "unknown",
+			metricType:  "unknown",
+			expectError: true,
 		},
 		{
-			name:           "gauge not found",
-			metricType:     "gauge",
-			metricName:     "unknown",
-			expectedResult: "",
-			expectError:    true,
+			name:        "gauge not found",
+			metricId:    "unknown",
+			metricType:  models.TypeGauge,
+			expectError: true,
 		},
 		{
-			name:           "success gauge",
-			metricType:     "gauge",
-			metricName:     "testG",
-			expectedResult: "3.14",
-			expectError:    false,
+			name:          "gauge success",
+			metricId:      "testG",
+			metricType:    models.TypeGauge,
+			expectedValue: expectedValue,
+			expectError:   false,
 		},
 		{
-			name:           "counter not found",
-			metricType:     "counter",
-			metricName:     "unknown",
-			expectedResult: "",
-			expectError:    true,
+			name:        "counter not found",
+			metricId:    "unknown",
+			metricType:  models.TypeCounter,
+			expectError: true,
 		},
 		{
-			name:           "success counter",
-			metricType:     "counter",
-			metricName:     "testC",
-			expectedResult: "314",
-			expectError:    false,
+			name:          "counter success",
+			metricId:      "testC",
+			metricType:    models.TypeCounter,
+			expectedDelta: expectedDelta,
+			expectError:   false,
 		},
 	}
 
 	st := storage.NewMemStorage()
-	st.UpdateGauge("testG", 3.14)
-	st.UpdateCounter("testC", 314)
+	st.UpdateGauge(models.Metrics{
+		ID:    "testG",
+		MType: models.TypeGauge,
+		Value: &expectedValue,
+	})
+	st.UpdateCounter(models.Metrics{
+		ID:    "testC",
+		MType: models.TypeCounter,
+		Delta: &expectedDelta,
+	})
 	service := NewMetricsService(st)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := service.GetString(test.metricType, test.metricName)
+			result, err := service.Get(test.metricType, test.metricId)
 			if test.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, test.expectedResult, result)
+				switch test.metricType {
+				case models.TypeGauge:
+					assert.Equal(t, test.expectedValue, *result.Value)
+				case models.TypeCounter:
+					assert.Equal(t, test.expectedDelta, *result.Delta)
+				}
 			}
 		})
 	}

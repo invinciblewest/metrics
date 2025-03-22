@@ -2,8 +2,8 @@ package services
 
 import (
 	"errors"
+	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
-	"strconv"
 )
 
 type MetricsService struct {
@@ -16,53 +16,51 @@ func NewMetricsService(st storage.Storage) MetricsService {
 	}
 }
 
-func (ms *MetricsService) checkType(metricType string) bool {
-	return metricType == "gauge" || metricType == "counter"
+func (ms *MetricsService) Update(metrics models.Metrics) (models.Metrics, error) {
+	if !metrics.CheckType() {
+		return models.Metrics{}, errors.New("wrong type")
+	}
+
+	switch metrics.MType {
+	case models.TypeGauge:
+		if metrics.Value == nil {
+			return metrics, errors.New("value is nil")
+		}
+		if err := ms.st.UpdateGauge(metrics); err != nil {
+			return metrics, err
+		}
+	case models.TypeCounter:
+		if metrics.Delta == nil {
+			return metrics, errors.New("delta is nil")
+		}
+		if err := ms.st.UpdateCounter(metrics); err != nil {
+			return metrics, err
+		}
+	}
+
+	return metrics, nil
 }
 
-func (ms *MetricsService) Update(metricType, metricName, metricValue string) error {
-	if !ms.checkType(metricType) {
-		return errors.New("wrong type")
+func (ms *MetricsService) Get(mType, id string) (models.Metrics, error) {
+	var result models.Metrics
+
+	if id == "" || !models.CheckType(mType) {
+		return result, errors.New("wrong type")
 	}
 
-	switch metricType {
-	case "gauge":
-		value, err := strconv.ParseFloat(metricValue, 64)
-		if err != nil {
-			return err
-		}
-		ms.st.UpdateGauge(metricName, value)
-	default:
-		value, err := strconv.ParseInt(metricValue, 10, 64)
-		if err != nil {
-			return err
-		}
-		ms.st.UpdateCounter(metricName, value)
-	}
-
-	return nil
-}
-
-func (ms *MetricsService) GetString(metricType, metricName string) (string, error) {
-	if metricName == "" || !ms.checkType(metricType) {
-		return "", errors.New("wrong type")
-	}
-
-	var result string
-
-	switch metricType {
-	case "gauge":
-		value, err := ms.st.GetGauge(metricName)
+	switch mType {
+	case models.TypeGauge:
+		value, err := ms.st.GetGauge(id)
 		if err != nil {
 			return result, errors.New("not found")
 		}
-		result = strconv.FormatFloat(value, 'f', -1, 64)
-	default:
-		value, err := ms.st.GetCounter(metricName)
+		result = value
+	case models.TypeCounter:
+		value, err := ms.st.GetCounter(id)
 		if err != nil {
 			return result, errors.New("not found")
 		}
-		result = strconv.FormatInt(value, 10)
+		result = value
 	}
 
 	return result, nil

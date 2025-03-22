@@ -2,9 +2,11 @@ package collectors
 
 import (
 	"github.com/invinciblewest/metrics/internal/logger"
+	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"go.uber.org/zap"
 	"math/rand"
+	"reflect"
 	"runtime"
 )
 
@@ -24,35 +26,76 @@ func (c *RuntimeCollector) Collect() error {
 	)
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	c.st.UpdateGauge("Alloc", float64(memStats.Alloc))
-	c.st.UpdateGauge("BuckHashSys", float64(memStats.BuckHashSys))
-	c.st.UpdateGauge("Frees", float64(memStats.Frees))
-	c.st.UpdateGauge("GCCPUFraction", memStats.GCCPUFraction)
-	c.st.UpdateGauge("GCSys", float64(memStats.GCSys))
-	c.st.UpdateGauge("HeapAlloc", float64(memStats.HeapAlloc))
-	c.st.UpdateGauge("HeapIdle", float64(memStats.HeapIdle))
-	c.st.UpdateGauge("HeapInuse", float64(memStats.HeapInuse))
-	c.st.UpdateGauge("HeapObjects", float64(memStats.HeapObjects))
-	c.st.UpdateGauge("HeapReleased", float64(memStats.HeapReleased))
-	c.st.UpdateGauge("HeapSys", float64(memStats.HeapSys))
-	c.st.UpdateGauge("LastGC", float64(memStats.LastGC))
-	c.st.UpdateGauge("Lookups", float64(memStats.Lookups))
-	c.st.UpdateGauge("MCacheInuse", float64(memStats.MCacheInuse))
-	c.st.UpdateGauge("MCacheSys", float64(memStats.MCacheSys))
-	c.st.UpdateGauge("MSpanInuse", float64(memStats.MSpanInuse))
-	c.st.UpdateGauge("MSpanSys", float64(memStats.MSpanSys))
-	c.st.UpdateGauge("Mallocs", float64(memStats.Mallocs))
-	c.st.UpdateGauge("NextGC", float64(memStats.NextGC))
-	c.st.UpdateGauge("NumForcedGC", float64(memStats.NumForcedGC))
-	c.st.UpdateGauge("NumGC", float64(memStats.NumGC))
-	c.st.UpdateGauge("OtherSys", float64(memStats.OtherSys))
-	c.st.UpdateGauge("PauseTotalNs", float64(memStats.PauseTotalNs))
-	c.st.UpdateGauge("StackInuse", float64(memStats.StackInuse))
-	c.st.UpdateGauge("StackSys", float64(memStats.StackSys))
-	c.st.UpdateGauge("Sys", float64(memStats.Sys))
-	c.st.UpdateGauge("TotalAlloc", float64(memStats.TotalAlloc))
-	c.st.UpdateGauge("RandomValue", rand.Float64())
-	c.st.UpdateCounter("PollCount", 1)
+
+	metricsIds := []string{
+		"Alloc",
+		"BuckHashSys",
+		"Frees",
+		"GCCPUFraction",
+		"GCSys",
+		"HeapAlloc",
+		"HeapIdle",
+		"HeapInuse",
+		"HeapObjects",
+		"HeapReleased",
+		"HeapSys",
+		"LastGC",
+		"Lookups",
+		"MCacheInuse",
+		"MCacheSys",
+		"MSpanInuse",
+		"MSpanSys",
+		"Mallocs",
+		"NextGC",
+		"NumForcedGC",
+		"NumGC",
+		"OtherSys",
+		"PauseTotalNs",
+		"StackInuse",
+		"StackSys",
+		"Sys",
+		"TotalAlloc",
+	}
+
+	value := reflect.ValueOf(memStats)
+	for _, key := range metricsIds {
+		field := value.FieldByName(key)
+		if field.IsValid() {
+			var fieldValue float64
+			if field.CanFloat() {
+				fieldValue = field.Float()
+			} else if field.CanUint() {
+				fieldValue = float64(field.Uint())
+			}
+			err := c.st.UpdateGauge(models.Metrics{
+				ID:    key,
+				MType: models.TypeGauge,
+				Value: &fieldValue,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	randomFloat := rand.Float64()
+	err := c.st.UpdateGauge(models.Metrics{
+		ID:    "RandomValue",
+		MType: models.TypeGauge,
+		Value: &randomFloat,
+	})
+	if err != nil {
+		return err
+	}
+	counterValue := int64(1)
+	err = c.st.UpdateCounter(models.Metrics{
+		ID:    "PollCount",
+		MType: models.TypeCounter,
+		Delta: &counterValue,
+	})
+	if err != nil {
+		return err
+	}
 
 	pc, err := c.st.GetCounter("PollCount")
 	if err != nil {
@@ -60,7 +103,7 @@ func (c *RuntimeCollector) Collect() error {
 	}
 	logger.Log.Info("poll is collected",
 		zap.String("collector", "runtime"),
-		zap.Int64("poll", pc),
+		zap.Int64("poll", *pc.Delta),
 	)
 	return nil
 }

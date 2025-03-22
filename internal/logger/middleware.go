@@ -35,7 +35,7 @@ func Middleware() func(next http.Handler) http.Handler {
 			start := time.Now()
 
 			responseData := &responseData{
-				status: 0,
+				status: 200,
 				size:   0,
 			}
 			lw := loggingResponseWriter{

@@ -17,8 +17,14 @@ func GetRouter(st storage.Storage) http.Handler {
 	r.Use(logger.Middleware())
 	r.Use(middleware.Recoverer)
 
-	r.Post("/update/{type}/{name}/{value}", metricsHandler.Update)
-	r.Get("/value/{type}/{name}", metricsHandler.Get)
+	r.Route("/update", func(r chi.Router) {
+		r.Post("/", metricsHandler.UpdateFromJSON)
+		r.Post("/{type}/{name}/{value}", metricsHandler.UpdateFromQuery)
+	})
+	r.Route("/value", func(r chi.Router) {
+		r.Post("/", metricsHandler.GetJSON)
+		r.Get("/{type}/{name}", metricsHandler.GetString)
+	})
 
 	return r
 }

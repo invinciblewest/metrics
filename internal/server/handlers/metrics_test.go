@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"bytes"
 	"github.com/go-resty/resty/v2"
+	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -9,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestUpdateMetricHandler(t *testing.T) {
+func TestMetricsHandler_UpdateFromQuery(t *testing.T) {
 	tests := []struct {
 		name   string
 		method string
@@ -61,14 +63,14 @@ func TestUpdateMetricHandler(t *testing.T) {
 	}
 
 	st := storage.NewMemStorage()
-	s := httptest.NewServer(GetRouter(st))
-	defer s.Close()
+	server := httptest.NewServer(GetRouter(st))
+	defer server.Close()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			req := resty.New().R()
 			req.Method = test.method
-			req.URL = s.URL + test.target
+			req.URL = server.URL + test.target
 
 			resp, err := req.Send()
 			assert.NoError(t, err)
@@ -77,13 +79,114 @@ func TestUpdateMetricHandler(t *testing.T) {
 	}
 }
 
-func TestGetMetricHandler(t *testing.T) {
-	st := storage.NewMemStorage()
-	st.UpdateGauge("testG", 3.14)
-	st.UpdateCounter("testC", 314)
+func TestMetricsHandler_UpdateFromJSON(t *testing.T) {
+	tests := []struct {
+		name         string
+		contentType  string
+		method       string
+		target       string
+		body         string
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			name:         "method not allowed",
+			contentType:  "application/json",
+			method:       http.MethodGet,
+			target:       "/update/",
+			body:         "",
+			expectedCode: http.StatusMethodNotAllowed,
+			expectedBody: "",
+		},
+		{
+			name:         "wrong content type",
+			contentType:  "application/xml",
+			method:       http.MethodPost,
+			target:       "/update/",
+			body:         "",
+			expectedCode: http.StatusBadRequest,
+			expectedBody: "",
+		},
+		{
+			name:         "invalid body",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/update/",
+			body:         `{"wrong": true`,
+			expectedCode: http.StatusBadRequest,
+			expectedBody: "",
+		},
+		{
+			name:         "wrong entity",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/update/",
+			body:         `{"wrong": true}`,
+			expectedCode: http.StatusNotFound,
+			expectedBody: "",
+		},
+		{
+			name:         "wrong type",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/update/",
+			body:         `{"id": "test1", "type": "unknown"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedBody: "",
+		},
+		{
+			name:         "success",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/update/",
+			body:         `{"id":"test","type":"counter","delta":1}`,
+			expectedCode: http.StatusOK,
+			expectedBody: `{"id":"test","type":"counter","delta":1}`,
+		},
+	}
 
-	s := httptest.NewServer(GetRouter(st))
-	defer s.Close()
+	st := storage.NewMemStorage()
+	server := httptest.NewServer(GetRouter(st))
+	defer server.Close()
+	client := resty.New()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := client.R()
+			req.Method = test.method
+			req.URL = server.URL + test.target
+			req.SetHeader("Content-Type", test.contentType)
+			if test.body != "" {
+				req.SetBody(test.body)
+			}
+
+			resp, err := req.Send()
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedCode, resp.StatusCode())
+			if test.expectedBody != "" {
+				assert.JSONEq(t, test.expectedBody, string(resp.Body()))
+			}
+		})
+	}
+}
+
+func TestMetricsHandler_GetString(t *testing.T) {
+	st := storage.NewMemStorage()
+	testG := 3.14
+	testC := int64(314)
+	st.UpdateGauge(models.Metrics{
+		ID:    "testG",
+		MType: models.TypeGauge,
+		Value: &testG,
+	})
+	st.UpdateCounter(models.Metrics{
+		ID:    "testC",
+		MType: models.TypeCounter,
+		Delta: &testC,
+	})
+
+	server := httptest.NewServer(GetRouter(st))
+	defer server.Close()
 
 	tests := []struct {
 		name         string
@@ -127,14 +230,128 @@ func TestGetMetricHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := resty.New().R()
 			req.Method = http.MethodGet
-			req.URL = s.URL + test.target
+			req.URL = server.URL + test.target
 
 			resp, err := req.Send()
 			assert.NoError(t, err)
 			assert.Equal(t, test.expectedCode, resp.StatusCode())
 			if test.expectedBody != "" {
-				assert.Equal(t, test.expectedBody, string(resp.Body()))
+				assert.Equal(t, test.expectedBody, string(bytes.TrimRight(resp.Body(), "\n")))
 			}
 		})
 	}
+}
+
+func TestMetricsHandler_GetJSON(t *testing.T) {
+	tests := []struct {
+		name         string
+		contentType  string
+		method       string
+		target       string
+		body         string
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			name:         "method not allowed",
+			contentType:  "application/json",
+			method:       http.MethodGet,
+			target:       "/value/",
+			body:         "",
+			expectedCode: http.StatusMethodNotAllowed,
+			expectedBody: "",
+		},
+		{
+			name:         "wrong content type",
+			contentType:  "application/xml",
+			method:       http.MethodPost,
+			target:       "/value/",
+			body:         "",
+			expectedCode: http.StatusBadRequest,
+			expectedBody: "",
+		},
+		{
+			name:         "invalid body",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/value/",
+			body:         `{"wrong": true`,
+			expectedCode: http.StatusBadRequest,
+			expectedBody: "",
+		},
+		{
+			name:         "wrong entity",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/value/",
+			body:         `{"wrong": true}`,
+			expectedCode: http.StatusNotFound,
+			expectedBody: "",
+		},
+		{
+			name:         "not found",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/value/",
+			body:         `{"id": "unknown", "type": "gauge"}`,
+			expectedCode: http.StatusNotFound,
+			expectedBody: "",
+		},
+		{
+			name:         "success gauge",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/value/",
+			body:         `{"id": "testG", "type": "gauge"}`,
+			expectedCode: http.StatusOK,
+			expectedBody: `{"id": "testG", "type": "gauge", "value": 3.14}`,
+		},
+		{
+			name:         "success counter",
+			contentType:  "application/json",
+			method:       http.MethodPost,
+			target:       "/value/",
+			body:         `{"id": "testC", "type": "counter"}`,
+			expectedCode: http.StatusOK,
+			expectedBody: `{"id": "testC", "type": "counter", "delta": 314}`,
+		},
+	}
+
+	st := storage.NewMemStorage()
+	testG := 3.14
+	testC := int64(314)
+	st.UpdateGauge(models.Metrics{
+		ID:    "testG",
+		MType: models.TypeGauge,
+		Value: &testG,
+	})
+	st.UpdateCounter(models.Metrics{
+		ID:    "testC",
+		MType: models.TypeCounter,
+		Delta: &testC,
+	})
+
+	server := httptest.NewServer(GetRouter(st))
+	defer server.Close()
+	client := resty.New()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := client.R()
+			req.Method = test.method
+			req.URL = server.URL + test.target
+			req.SetHeader("Content-Type", test.contentType)
+			if test.body != "" {
+				req.SetBody(test.body)
+			}
+
+			resp, err := req.Send()
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedCode, resp.StatusCode())
+			if test.expectedBody != "" {
+				assert.JSONEq(t, test.expectedBody, string(resp.Body()))
+			}
+		})
+	}
+
 }

@@ -3,6 +3,7 @@ package senders
 import (
 	"errors"
 	"github.com/go-resty/resty/v2"
+	"github.com/invinciblewest/metrics/internal/models"
 	"net/http"
 	"net/url"
 )
@@ -24,14 +25,15 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 	}
 }
 
-func (s *HTTPSender) Send(mType string, mName string, mValue string) error {
-	path, err := url.JoinPath(s.serverAddr, "update", mType, mName, mValue)
+func (s *HTTPSender) Send(metrics models.Metrics) error {
+	path, err := url.JoinPath(s.serverAddr, "update")
 	if err != nil {
 		return err
 	}
 
 	resp, err := s.client.R().
-		SetHeader("Content-Type", "text/plain").
+		SetHeader("Content-Type", "application/json").
+		SetBody(&metrics).
 		Post(path)
 
 	if err != nil {
