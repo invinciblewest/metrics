@@ -6,6 +6,7 @@ import (
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/server/services"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -17,6 +18,15 @@ func GetRouter(st storage.Storage) http.Handler {
 	r.Use(logger.Middleware())
 	r.Use(middleware.Recoverer)
 	r.Use(gzipMiddleware())
+
+	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte("<html><body><h1>Metrics</h1></body></html>"))
+		if err != nil {
+			logger.Log.Info("ошибка записи ответа", zap.Error(err))
+		}
+	})
 
 	r.Route("/update", func(r chi.Router) {
 		r.Post("/", metricsHandler.UpdateFromJSON)
