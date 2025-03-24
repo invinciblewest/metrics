@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/invinciblewest/metrics/internal/models"
@@ -87,9 +88,16 @@ func (h *MetricsHandler) UpdateFromJSON(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err = json.NewEncoder(w).Encode(updatedMetrics); err != nil {
+	var buf bytes.Buffer
+	if err = json.NewEncoder(&buf).Encode(updatedMetrics); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
@@ -105,12 +113,14 @@ func (h *MetricsHandler) GetString(w http.ResponseWriter, r *http.Request) {
 
 	switch metrics.MType {
 	case models.TypeGauge:
+		w.WriteHeader(http.StatusOK)
 		_, err = w.Write([]byte(strconv.FormatFloat(*metrics.Value, 'f', -1, 64)))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	case models.TypeCounter:
+		w.WriteHeader(http.StatusOK)
 		_, err = w.Write([]byte(strconv.FormatInt(*metrics.Delta, 10)))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -143,8 +153,14 @@ func (h *MetricsHandler) GetJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	if err = json.NewEncoder(w).Encode(result); err != nil {
+	var buf bytes.Buffer
+	if err = json.NewEncoder(&buf).Encode(result); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
