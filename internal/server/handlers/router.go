@@ -16,6 +16,7 @@ func GetRouter(st storage.Storage) http.Handler {
 
 	r.Use(logger.Middleware())
 	r.Use(middleware.Recoverer)
+	r.Use(gzipMiddleware())
 
 	r.Route("/update", func(r chi.Router) {
 		r.Post("/", metricsHandler.UpdateFromJSON)

@@ -1,6 +1,9 @@
 package senders
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"errors"
 	"github.com/go-resty/resty/v2"
 	"github.com/invinciblewest/metrics/internal/logger"
@@ -45,9 +48,20 @@ func (s *HTTPSender) Send(metrics models.Metrics) error {
 		return err
 	}
 
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+	if err = json.NewEncoder(gz).Encode(metrics); err != nil {
+		return err
+	}
+	if err = gz.Close(); err != nil {
+		return err
+	}
+
 	resp, err := s.client.R().
+		SetHeader("Content-Encoding", "gzip").
+		SetHeader("Accept-Encoding", "gzip").
 		SetHeader("Content-Type", "application/json").
-		SetBody(&metrics).
+		SetBody(buf.Bytes()).
 		Post(path)
 
 	if err != nil {
