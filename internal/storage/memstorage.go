@@ -111,6 +111,12 @@ func (st *MemStorage) Load() error {
 	}
 	logger.Log.Info("loading storage...", zap.String("storage", st.path))
 
+	_, err := os.Stat(st.path)
+	if os.IsNotExist(err) {
+		logger.Log.Info("storage file not exists", zap.String("path", st.path))
+		return nil
+	}
+
 	file, err := os.OpenFile(st.path, os.O_RDONLY, 0666)
 	if err != nil {
 		return err
