@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewMetricsService(t *testing.T) {
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	service := NewMetricsService(st)
 	assert.NotNil(t, service)
 }
@@ -45,7 +45,7 @@ func TestMetricsService_Update(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	service := NewMetricsService(st)
 
 	for _, test := range tests {
@@ -113,7 +113,7 @@ func TestMetricsService_Get(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	st.UpdateGauge(models.Metrics{
 		ID:    "testG",
 		MType: models.TypeGauge,

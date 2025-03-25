@@ -12,4 +12,6 @@ type Storage interface {
 	UpdateCounter(metrics models.Metrics) error
 	GetCounter(id string) (models.Metrics, error)
 	GetCounterList() CounterList
+	Save() error
+	Load() error
 }

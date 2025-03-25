@@ -62,7 +62,7 @@ func TestMetricsHandler_UpdateFromQuery(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	server := httptest.NewServer(GetRouter(st))
 	defer server.Close()
 
@@ -145,7 +145,7 @@ func TestMetricsHandler_UpdateFromJSON(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	server := httptest.NewServer(GetRouter(st))
 	defer server.Close()
 	client := resty.New()
@@ -171,7 +171,7 @@ func TestMetricsHandler_UpdateFromJSON(t *testing.T) {
 }
 
 func TestMetricsHandler_GetString(t *testing.T) {
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
 	st.UpdateGauge(models.Metrics{
@@ -317,7 +317,7 @@ func TestMetricsHandler_GetJSON(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
 	st.UpdateGauge(models.Metrics{

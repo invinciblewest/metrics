@@ -22,7 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	collectorsList := []collectors.Collector{
 		collectors.NewRuntimeCollector(st),
 	}

@@ -27,7 +27,7 @@ func TestHTTPSender_Send(t *testing.T) {
 		assert.Error(t, err)
 	})
 	t.Run("success", func(t *testing.T) {
-		st := storage.NewMemStorage()
+		st := storage.NewMemStorage("", false)
 		srv := httptest.NewServer(handlers.GetRouter(st))
 		defer srv.Close()
 		s := createSender(srv.URL)

@@ -31,7 +31,7 @@ func (s *MockSender) Send(metrics models.Metrics) error {
 }
 
 func TestNewAgent(t *testing.T) {
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	collectorsList := []collectors.Collector{
 		&MockCollector{
 			st: st,

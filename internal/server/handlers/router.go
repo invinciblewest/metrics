@@ -24,7 +24,7 @@ func GetRouter(st storage.Storage) http.Handler {
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte("<html><body><h1>Metrics</h1></body></html>"))
 		if err != nil {
-			logger.Log.Info("ошибка записи ответа", zap.Error(err))
+			logger.Log.Info("main page error", zap.Error(err))
 		}
 	})
 

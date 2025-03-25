@@ -7,12 +7,12 @@ import (
 )
 
 func TestNewMemStorage(t *testing.T) {
-	st := NewMemStorage()
+	st := NewMemStorage("", false)
 	assert.Implements(t, (*Storage)(nil), st)
 }
 
 func TestMemStorage_Gauge(t *testing.T) {
-	st := NewMemStorage()
+	st := NewMemStorage("", false)
 
 	f1 := 3.14
 	f2 := 14.3
@@ -58,7 +58,7 @@ func TestMemStorage_Gauge(t *testing.T) {
 }
 
 func TestMemStorage_Counter(t *testing.T) {
-	st := NewMemStorage()
+	st := NewMemStorage("", false)
 
 	c1 := int64(1)
 	c2 := int64(2)

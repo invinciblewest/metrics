@@ -12,7 +12,7 @@ func TestSendMetrics(t *testing.T) {
 	sender := createSender("http://localhost:8080")
 
 	t.Run("without metrics", func(t *testing.T) {
-		st := storage.NewMemStorage()
+		st := storage.NewMemStorage("", false)
 		err := SendMetrics(st, sender)
 		assert.NoError(t, err)
 	})
@@ -27,7 +27,7 @@ func TestSendMetrics(t *testing.T) {
 			_ = server.Close()
 		}()
 
-		st := storage.NewMemStorage()
+		st := storage.NewMemStorage("", false)
 		st.UpdateGauge(createGaugeMetrics())
 		st.UpdateCounter(createCounterMetrics())
 
@@ -35,7 +35,7 @@ func TestSendMetrics(t *testing.T) {
 		assert.NoError(t, err)
 	})
 	t.Run("error", func(t *testing.T) {
-		st := storage.NewMemStorage()
+		st := storage.NewMemStorage("", false)
 		st.UpdateCounter(createCounterMetrics())
 
 		err := SendMetrics(st, sender)
