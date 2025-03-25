@@ -6,20 +6,25 @@ import (
 )
 
 type Config struct {
-	Address string `env:"ADDRESS"`
+	Address         string `env:"ADDRESS"`
+	LogLevel        string `env:"LOG_LEVEL"`
+	StoreInterval   int    `env:"STORE_INTERVAL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	Restore         bool   `env:"RESTORE"`
 }
 
 func GetConfig() (Config, error) {
-	serverAddr := flag.String("a", "localhost:8080", "server address")
+	var config Config
+
+	flag.StringVar(&config.Address, "a", "localhost:8080", "server address")
+	flag.StringVar(&config.LogLevel, "l", "info", "log level")
+	flag.IntVar(&config.StoreInterval, "i", 300, "store interval")
+	flag.StringVar(&config.FileStoragePath, "f", "./storage.json", "storage path")
+	flag.BoolVar(&config.Restore, "r", true, "restore")
 	flag.Parse()
 
-	var config Config
 	if err := env.Parse(&config); err != nil {
 		return Config{}, err
-	}
-
-	if config.Address == "" {
-		config.Address = *serverAddr
 	}
 
 	return config, nil

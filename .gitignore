@@ -26,3 +26,5 @@ vendor/
 
 Makefile
 metricstest
+
+storage.json

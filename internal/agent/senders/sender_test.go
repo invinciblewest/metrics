@@ -1,6 +1,7 @@
 package senders
 
 import (
+	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -11,7 +12,7 @@ func TestSendMetrics(t *testing.T) {
 	sender := createSender("http://localhost:8080")
 
 	t.Run("without metrics", func(t *testing.T) {
-		st := storage.NewMemStorage()
+		st := storage.NewMemStorage("", false)
 		err := SendMetrics(st, sender)
 		assert.NoError(t, err)
 	})
@@ -26,23 +27,40 @@ func TestSendMetrics(t *testing.T) {
 			_ = server.Close()
 		}()
 
-		st := storage.NewMemStorage()
-		st.UpdateGauge("testG", 3.14)
-		st.UpdateCounter("testC", int64(314))
+		st := storage.NewMemStorage("", false)
+		st.UpdateGauge(createGaugeMetrics())
+		st.UpdateCounter(createCounterMetrics())
 
 		err := SendMetrics(st, sender)
 		assert.NoError(t, err)
 	})
 	t.Run("error", func(t *testing.T) {
-		st := storage.NewMemStorage()
-		st.UpdateCounter("testC", int64(314))
+		st := storage.NewMemStorage("", false)
+		st.UpdateCounter(createCounterMetrics())
 
 		err := SendMetrics(st, sender)
 		assert.Error(t, err)
 
-		st.UpdateGauge("testG", 3.14)
+		st.UpdateGauge(createGaugeMetrics())
 		err = SendMetrics(st, sender)
 		assert.Error(t, err)
 	})
+}
 
+func createCounterMetrics() models.Metrics {
+	delta := int64(314)
+	return models.Metrics{
+		ID:    "testC",
+		MType: models.TypeCounter,
+		Delta: &delta,
+	}
+}
+
+func createGaugeMetrics() models.Metrics {
+	value := 3.14
+	return models.Metrics{
+		ID:    "testG",
+		MType: models.TypeGauge,
+		Value: &value,
+	}
 }
