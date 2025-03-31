@@ -16,17 +16,16 @@ type MockCollector struct {
 
 func (c *MockCollector) Collect() error {
 	delta := int64(1)
-	c.st.UpdateCounter(models.Metrics{
+	return c.st.UpdateCounter(models.Metric{
 		ID:    "PollCount",
 		MType: models.TypeCounter,
 		Delta: &delta,
 	})
-	return nil
 }
 
 type MockSender struct{}
 
-func (s *MockSender) Send(metrics models.Metrics) error {
+func (s *MockSender) SendMetric(metric models.Metric) error {
 	return nil
 }
 

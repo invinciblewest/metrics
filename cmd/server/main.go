@@ -5,11 +5,11 @@ import (
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/server/config"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
+	"github.com/invinciblewest/metrics/internal/server/services"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -24,7 +24,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	st := storage.NewMemStorage(cfg.FileStoragePath, cfg.StoreInterval == 0)
+	syncSave := cfg.StoreInterval == 0
+	st := storage.NewMemStorage(cfg.FileStoragePath, syncSave)
 
 	if cfg.Restore {
 		if err = st.Load(); err != nil {
@@ -32,15 +33,17 @@ func main() {
 		}
 	}
 
-	if cfg.StoreInterval > 0 {
-		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
+	if cfg.StoreInterval > 0 {
 		ticker := time.NewTicker(time.Duration(cfg.StoreInterval) * time.Second)
+		defer ticker.Stop()
+
 		go func() {
 			for {
 				select {
-				case <-sig:
+				case <-ctx.Done():
 					if err = st.Save(); err != nil {
 						log.Fatal(err)
 					}
@@ -54,23 +57,25 @@ func main() {
 		}()
 	}
 
-	if err := run(cfg.Address, st); err != nil {
-		log.Fatal(err)
+	router := handlers.GetRouter(
+		handlers.NewHandler(
+			services.NewMetricsService(st),
+		),
+	)
+
+	if err := run(ctx, cfg.Address, router); err != nil {
+		logger.Log.Fatal("server error", zap.Error(err))
 	}
 }
 
-func run(addr string, st storage.Storage) error {
-	r := handlers.GetRouter(st)
+func run(ctx context.Context, addr string, handler http.Handler) error {
 	server := &http.Server{
 		Addr:    addr,
-		Handler: r,
+		Handler: handler,
 	}
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-
 	go func() {
-		<-sig
+		<-ctx.Done()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -81,8 +86,6 @@ func run(addr string, st storage.Storage) error {
 		}
 	}()
 
-	logger.Log.Info("server is starting",
-		zap.String("address", addr),
-	)
+	logger.Log.Info("server is starting", zap.String("address", addr))
 	return server.ListenAndServe()
 }

@@ -42,7 +42,7 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 	}
 }
 
-func (s *HTTPSender) Send(metrics models.Metrics) error {
+func (s *HTTPSender) SendMetric(metric models.Metric) error {
 	path, err := url.JoinPath(s.serverAddr, "update")
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (s *HTTPSender) Send(metrics models.Metrics) error {
 
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
-	if err = json.NewEncoder(gz).Encode(metrics); err != nil {
+	if err = json.NewEncoder(gz).Encode(metric); err != nil {
 		return err
 	}
 	if err = gz.Close(); err != nil {

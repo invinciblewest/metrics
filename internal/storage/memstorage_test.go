@@ -17,12 +17,12 @@ func TestMemStorage_Gauge(t *testing.T) {
 	f1 := 3.14
 	f2 := 14.3
 	list := GaugeList{
-		"test1": models.Metrics{
+		"test1": models.Metric{
 			ID:    "test1",
 			MType: models.TypeGauge,
 			Value: &f1,
 		},
-		"test2": models.Metrics{
+		"test2": models.Metric{
 			ID:    "test2",
 			MType: models.TypeGauge,
 			Value: &f2,
@@ -35,7 +35,7 @@ func TestMemStorage_Gauge(t *testing.T) {
 		}
 	})
 	t.Run("update gauge error", func(t *testing.T) {
-		err := st.UpdateGauge(models.Metrics{
+		err := st.UpdateGauge(models.Metric{
 			ID:    "test3",
 			MType: models.TypeCounter,
 		})
@@ -64,12 +64,12 @@ func TestMemStorage_Counter(t *testing.T) {
 	c2 := int64(2)
 
 	list := CounterList{
-		"test1": models.Metrics{
+		"test1": models.Metric{
 			ID:    "test1",
 			MType: models.TypeCounter,
 			Delta: &c1,
 		},
-		"test2": models.Metrics{
+		"test2": models.Metric{
 			ID:    "test2",
 			MType: models.TypeCounter,
 			Delta: &c2,
@@ -82,7 +82,7 @@ func TestMemStorage_Counter(t *testing.T) {
 		}
 	})
 	t.Run("update counter error", func(t *testing.T) {
-		err := st.UpdateCounter(models.Metrics{
+		err := st.UpdateCounter(models.Metric{
 			ID:    "test3",
 			MType: models.TypeGauge,
 		})

@@ -8,6 +8,7 @@ import (
 	"github.com/invinciblewest/metrics/internal/models"
 	"go.uber.org/zap"
 	"os"
+	"sync"
 )
 
 type MemStorage struct {
@@ -15,6 +16,7 @@ type MemStorage struct {
 	Counters CounterList `json:"counters"`
 	path     string
 	syncSave bool
+	mu       sync.RWMutex
 }
 
 func NewMemStorage(path string, syncSave bool) *MemStorage {
@@ -26,42 +28,54 @@ func NewMemStorage(path string, syncSave bool) *MemStorage {
 	}
 }
 
-func (st *MemStorage) UpdateGauge(metrics models.Metrics) error {
-	if metrics.MType != models.TypeGauge {
+func (st *MemStorage) UpdateGauge(metric models.Metric) error {
+	if metric.MType != models.TypeGauge {
 		return errors.New("wrong type")
 	}
 
-	st.Gauges[metrics.ID] = metrics
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
+	st.Gauges[metric.ID] = metric
 	if st.syncSave {
 		return st.Save()
 	}
 	return nil
 }
 
-func (st *MemStorage) GetGauge(id string) (models.Metrics, error) {
+func (st *MemStorage) GetGauge(id string) (models.Metric, error) {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	value, exists := st.Gauges[id]
 	if exists {
 		return value, nil
 	} else {
-		return models.Metrics{}, errors.New("not found")
+		return models.Metric{}, ErrNotFound
 	}
 }
 
 func (st *MemStorage) GetGaugeList() GaugeList {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	return st.Gauges
 }
 
-func (st *MemStorage) UpdateCounter(metrics models.Metrics) error {
-	if metrics.MType != models.TypeCounter {
+func (st *MemStorage) UpdateCounter(metric models.Metric) error {
+	if metric.MType != models.TypeCounter {
 		return errors.New("wrong type")
 	}
 
-	currentMetrics, exists := st.Counters[metrics.ID]
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
+	currentMetric, exists := st.Counters[metric.ID]
 	if exists {
-		*metrics.Delta += *currentMetrics.Delta
+		*metric.Delta += *currentMetric.Delta
 	}
 
-	st.Counters[metrics.ID] = metrics
+	st.Counters[metric.ID] = metric
 
 	if st.syncSave {
 		return st.Save()
@@ -69,16 +83,22 @@ func (st *MemStorage) UpdateCounter(metrics models.Metrics) error {
 	return nil
 }
 
-func (st *MemStorage) GetCounter(id string) (models.Metrics, error) {
+func (st *MemStorage) GetCounter(id string) (models.Metric, error) {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	value, exists := st.Counters[id]
 	if exists {
 		return value, nil
 	} else {
-		return models.Metrics{}, errors.New("not found")
+		return models.Metric{}, ErrNotFound
 	}
 }
 
 func (st *MemStorage) GetCounterList() CounterList {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	return st.Counters
 }
 
@@ -88,6 +108,9 @@ func (st *MemStorage) Save() error {
 	}
 	logger.Log.Info("saving storage...", zap.String("storage", st.path))
 
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
 	file, err := os.OpenFile(st.path, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -95,7 +118,7 @@ func (st *MemStorage) Save() error {
 	defer closeFile(file)
 
 	var buf bytes.Buffer
-	if err = json.NewEncoder(&buf).Encode(*st); err != nil { // Передаем саму структуру
+	if err = json.NewEncoder(&buf).Encode(st); err != nil { // Передаем саму структуру
 		return err
 	}
 	if _, err = file.Write(buf.Bytes()); err != nil {
@@ -122,6 +145,9 @@ func (st *MemStorage) Load() error {
 		return err
 	}
 	defer closeFile(file)
+
+	st.mu.Lock()
+	defer st.mu.Unlock()
 
 	if err = json.NewDecoder(file).Decode(&st); err != nil {
 		return err

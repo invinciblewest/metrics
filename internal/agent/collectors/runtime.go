@@ -67,7 +67,7 @@ func (c *RuntimeCollector) Collect() error {
 			} else if field.CanUint() {
 				fieldValue = float64(field.Uint())
 			}
-			err := c.st.UpdateGauge(models.Metrics{
+			err := c.st.UpdateGauge(models.Metric{
 				ID:    key,
 				MType: models.TypeGauge,
 				Value: &fieldValue,
@@ -79,7 +79,7 @@ func (c *RuntimeCollector) Collect() error {
 	}
 
 	randomFloat := rand.Float64()
-	err := c.st.UpdateGauge(models.Metrics{
+	err := c.st.UpdateGauge(models.Metric{
 		ID:    "RandomValue",
 		MType: models.TypeGauge,
 		Value: &randomFloat,
@@ -88,7 +88,7 @@ func (c *RuntimeCollector) Collect() error {
 		return err
 	}
 	counterValue := int64(1)
-	err = c.st.UpdateCounter(models.Metrics{
+	err = c.st.UpdateCounter(models.Metric{
 		ID:    "PollCount",
 		MType: models.TypeCounter,
 		Delta: &counterValue,

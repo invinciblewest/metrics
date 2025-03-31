@@ -3,24 +3,26 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/server/services"
+	"github.com/invinciblewest/metrics/internal/storage"
 	"net/http"
 	"strconv"
 )
 
-type MetricsHandler struct {
+type Handler struct {
 	service services.MetricsService
 }
 
-func NewMetricsHandler(service services.MetricsService) *MetricsHandler {
-	return &MetricsHandler{
+func NewHandler(service services.MetricsService) *Handler {
+	return &Handler{
 		service: service,
 	}
 }
 
-func (h *MetricsHandler) UpdateFromQuery(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdateMetric(w http.ResponseWriter, r *http.Request) {
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
 	metricValue := chi.URLParam(r, "value")
@@ -30,32 +32,31 @@ func (h *MetricsHandler) UpdateFromQuery(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	metrics := models.Metrics{
+	metric := models.Metric{
 		ID:    metricName,
 		MType: metricType,
 	}
-	if !metrics.CheckType() {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	switch metrics.MType {
+	switch metric.MType {
 	case models.TypeGauge:
 		value, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		metrics.Value = &value
+		metric.Value = &value
 	case models.TypeCounter:
 		delta, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		metrics.Delta = &delta
+		metric.Delta = &delta
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	if _, err := h.service.Update(metrics); err != nil {
+	if _, err := h.service.Update(metric); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -63,13 +64,13 @@ func (h *MetricsHandler) UpdateFromQuery(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *MetricsHandler) UpdateFromJSON(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdateMetricJSON(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	var metrics models.Metrics
+	var metrics models.Metric
 	if err := json.NewDecoder(r.Body).Decode(&metrics); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -101,13 +102,17 @@ func (h *MetricsHandler) UpdateFromJSON(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (h *MetricsHandler) GetString(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
 
 	metrics, err := h.service.Get(metricType, metricName)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		if errors.Is(err, storage.ErrNotFound) || errors.Is(err, storage.ErrWrongType) {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -129,13 +134,13 @@ func (h *MetricsHandler) GetString(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *MetricsHandler) GetJSON(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	var metrics models.Metrics
+	var metrics models.Metric
 	if err := json.NewDecoder(r.Body).Decode(&metrics); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -148,7 +153,11 @@ func (h *MetricsHandler) GetJSON(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.service.Get(metrics.MType, metrics.ID)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		if errors.Is(err, storage.ErrNotFound) || errors.Is(err, storage.ErrWrongType) {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 

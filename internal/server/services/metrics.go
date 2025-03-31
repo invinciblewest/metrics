@@ -16,11 +16,7 @@ func NewMetricsService(st storage.Storage) MetricsService {
 	}
 }
 
-func (ms *MetricsService) Update(metrics models.Metrics) (models.Metrics, error) {
-	if !metrics.CheckType() {
-		return models.Metrics{}, errors.New("wrong type")
-	}
-
+func (ms *MetricsService) Update(metrics models.Metric) (models.Metric, error) {
 	switch metrics.MType {
 	case models.TypeGauge:
 		if metrics.Value == nil {
@@ -36,31 +32,35 @@ func (ms *MetricsService) Update(metrics models.Metrics) (models.Metrics, error)
 		if err := ms.st.UpdateCounter(metrics); err != nil {
 			return metrics, err
 		}
+	default:
+		return models.Metric{}, storage.ErrWrongType
 	}
 
 	return metrics, nil
 }
 
-func (ms *MetricsService) Get(mType, id string) (models.Metrics, error) {
-	var result models.Metrics
+func (ms *MetricsService) Get(mType, id string) (models.Metric, error) {
+	var result models.Metric
 
-	if id == "" || !models.CheckType(mType) {
-		return result, errors.New("wrong type")
+	if id == "" {
+		return result, errors.New("id is empty")
 	}
 
 	switch mType {
 	case models.TypeGauge:
 		value, err := ms.st.GetGauge(id)
 		if err != nil {
-			return result, errors.New("not found")
+			return result, storage.ErrNotFound
 		}
 		result = value
 	case models.TypeCounter:
 		value, err := ms.st.GetCounter(id)
 		if err != nil {
-			return result, errors.New("not found")
+			return result, err
 		}
 		result = value
+	default:
+		return result, storage.ErrWrongType
 	}
 
 	return result, nil

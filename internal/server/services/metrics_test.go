@@ -50,7 +50,7 @@ func TestMetricsService_Update(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			metrics := models.Metrics{
+			metrics := models.Metric{
 				ID:    test.metricID,
 				MType: test.metricType,
 				Delta: &test.delta,
@@ -114,16 +114,18 @@ func TestMetricsService_Get(t *testing.T) {
 	}
 
 	st := storage.NewMemStorage("", false)
-	st.UpdateGauge(models.Metrics{
+	err := st.UpdateGauge(models.Metric{
 		ID:    "testG",
 		MType: models.TypeGauge,
 		Value: &expectedValue,
 	})
-	st.UpdateCounter(models.Metrics{
+	assert.NoError(t, err)
+	err = st.UpdateCounter(models.Metric{
 		ID:    "testC",
 		MType: models.TypeCounter,
 		Delta: &expectedDelta,
 	})
+	assert.NoError(t, err)
 	service := NewMetricsService(st)
 
 	for _, test := range tests {

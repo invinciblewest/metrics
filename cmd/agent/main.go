@@ -32,8 +32,8 @@ func main() {
 		senders.NewHTTPSender(addr, http.DefaultClient),
 	}
 
-	agent := agent.NewAgent(st, collectorsList, sendersList, cfg.PollInterval, cfg.ReportInterval)
-	if err := agent.Run(); err != nil {
+	agentApp := agent.NewAgent(st, collectorsList, sendersList, cfg.PollInterval, cfg.ReportInterval)
+	if err := agentApp.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

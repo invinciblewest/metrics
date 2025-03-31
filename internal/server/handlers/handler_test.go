@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/go-resty/resty/v2"
 	"github.com/invinciblewest/metrics/internal/models"
+	"github.com/invinciblewest/metrics/internal/server/services"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -63,7 +64,7 @@ func TestMetricsHandler_UpdateFromQuery(t *testing.T) {
 	}
 
 	st := storage.NewMemStorage("", false)
-	server := httptest.NewServer(GetRouter(st))
+	server := httptest.NewServer(newRouter(st))
 	defer server.Close()
 
 	for _, test := range tests {
@@ -146,7 +147,7 @@ func TestMetricsHandler_UpdateFromJSON(t *testing.T) {
 	}
 
 	st := storage.NewMemStorage("", false)
-	server := httptest.NewServer(GetRouter(st))
+	server := httptest.NewServer(newRouter(st))
 	defer server.Close()
 	client := resty.New()
 
@@ -174,18 +175,20 @@ func TestMetricsHandler_GetString(t *testing.T) {
 	st := storage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
-	st.UpdateGauge(models.Metrics{
+	err := st.UpdateGauge(models.Metric{
 		ID:    "testG",
 		MType: models.TypeGauge,
 		Value: &testG,
 	})
-	st.UpdateCounter(models.Metrics{
+	assert.NoError(t, err)
+	err = st.UpdateCounter(models.Metric{
 		ID:    "testC",
 		MType: models.TypeCounter,
 		Delta: &testC,
 	})
+	assert.NoError(t, err)
 
-	server := httptest.NewServer(GetRouter(st))
+	server := httptest.NewServer(newRouter(st))
 	defer server.Close()
 
 	tests := []struct {
@@ -320,18 +323,20 @@ func TestMetricsHandler_GetJSON(t *testing.T) {
 	st := storage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
-	st.UpdateGauge(models.Metrics{
+	err := st.UpdateGauge(models.Metric{
 		ID:    "testG",
 		MType: models.TypeGauge,
 		Value: &testG,
 	})
-	st.UpdateCounter(models.Metrics{
+	assert.NoError(t, err)
+	err = st.UpdateCounter(models.Metric{
 		ID:    "testC",
 		MType: models.TypeCounter,
 		Delta: &testC,
 	})
+	assert.NoError(t, err)
 
-	server := httptest.NewServer(GetRouter(st))
+	server := httptest.NewServer(newRouter(st))
 	defer server.Close()
 	client := resty.New()
 
@@ -354,4 +359,12 @@ func TestMetricsHandler_GetJSON(t *testing.T) {
 		})
 	}
 
+}
+
+func newRouter(st storage.Storage) http.Handler {
+	return GetRouter(
+		NewHandler(
+			services.NewMetricsService(st),
+		),
+	)
 }

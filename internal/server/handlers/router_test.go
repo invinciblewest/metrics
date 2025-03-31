@@ -9,6 +9,6 @@ import (
 
 func TestGetRouter(t *testing.T) {
 	st := storage.NewMemStorage("", false)
-	r := GetRouter(st)
+	r := newRouter(st)
 	assert.Implements(t, (*http.Handler)(nil), r)
 }

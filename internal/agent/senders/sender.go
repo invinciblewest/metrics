@@ -7,19 +7,19 @@ import (
 )
 
 type Sender interface {
-	Send(metrics models.Metrics) error
+	SendMetric(metric models.Metric) error
 }
 
 func SendMetrics(st storage.Storage, senders ...Sender) error {
 	logger.Log.Info("sending metrics to server...")
 	for _, s := range senders {
 		for _, v := range st.GetGaugeList() {
-			if err := s.Send(v); err != nil {
+			if err := s.SendMetric(v); err != nil {
 				return err
 			}
 		}
 		for _, v := range st.GetCounterList() {
-			if err := s.Send(v); err != nil {
+			if err := s.SendMetric(v); err != nil {
 				return err
 			}
 		}
