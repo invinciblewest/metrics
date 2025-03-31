@@ -39,6 +39,7 @@ func TestSendMetrics(t *testing.T) {
 	t.Run("error", func(t *testing.T) {
 		st := storage.NewMemStorage("", false)
 		err := st.UpdateCounter(createCounterMetric())
+		assert.NoError(t, err)
 
 		err = SendMetrics(st, sender)
 		assert.Error(t, err)
