@@ -5,6 +5,7 @@ import (
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/config"
 	"github.com/invinciblewest/metrics/internal/agent/senders"
+	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"log"
 	"net/http"
@@ -16,7 +17,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	st := storage.NewMemStorage()
+	err = logger.Initialize(cfg.LogLevel)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	st := storage.NewMemStorage("", false)
 	collectorsList := []collectors.Collector{
 		collectors.NewRuntimeCollector(st),
 	}
@@ -26,8 +32,8 @@ func main() {
 		senders.NewHTTPSender(addr, http.DefaultClient),
 	}
 
-	agent := agent.NewAgent(st, collectorsList, sendersList, cfg.PollInterval, cfg.ReportInterval)
-	if err := agent.Run(); err != nil {
+	agentApp := agent.NewAgent(st, collectorsList, sendersList, cfg.PollInterval, cfg.ReportInterval)
+	if err := agentApp.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

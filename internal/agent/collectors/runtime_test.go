@@ -8,13 +8,13 @@ import (
 )
 
 func TestNewRuntimeCollector(t *testing.T) {
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	c := NewRuntimeCollector(st)
 	assert.Implements(t, (*Collector)(nil), c)
 }
 
 func TestRuntimeCollector_Collect(t *testing.T) {
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	c := NewRuntimeCollector(st)
 
 	t.Run("collect error", func(t *testing.T) {

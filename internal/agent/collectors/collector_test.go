@@ -14,7 +14,7 @@ func (c *TestCollector) Collect() error {
 }
 
 func TestCollectMetrics(t *testing.T) {
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	t.Run("success", func(t *testing.T) {
 		c := NewRuntimeCollector(st)
 

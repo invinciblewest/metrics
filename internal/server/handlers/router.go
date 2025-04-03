@@ -3,21 +3,35 @@ package handlers
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/invinciblewest/metrics/internal/server/services"
-	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/logger"
+	"go.uber.org/zap"
 	"net/http"
 )
 
-func GetRouter(st storage.Storage) http.Handler {
+func GetRouter(handler *Handler) http.Handler {
 	r := chi.NewRouter()
-	metricsService := services.NewMetricsService(st)
-	metricsHandler := NewMetricsHandler(metricsService)
 
-	r.Use(middleware.Logger)
+	r.Use(logger.Middleware())
 	r.Use(middleware.Recoverer)
+	r.Use(gzipMiddleware())
 
-	r.Post("/update/{type}/{name}/{value}", metricsHandler.Update)
-	r.Get("/value/{type}/{name}", metricsHandler.Get)
+	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte("<html><body><h1>Metrics</h1></body></html>"))
+		if err != nil {
+			logger.Log.Info("main page error", zap.Error(err))
+		}
+	})
+
+	r.Route("/update", func(r chi.Router) {
+		r.Post("/", handler.UpdateMetricJSON)
+		r.Post("/{type}/{name}/{value}", handler.UpdateMetric)
+	})
+	r.Route("/value", func(r chi.Router) {
+		r.Post("/", handler.GetMetricJSON)
+		r.Get("/{type}/{name}", handler.GetMetric)
+	})
 
 	return r
 }

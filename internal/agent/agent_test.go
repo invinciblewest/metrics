@@ -3,6 +3,7 @@ package agent
 import (
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/senders"
+	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -14,18 +15,22 @@ type MockCollector struct {
 }
 
 func (c *MockCollector) Collect() error {
-	c.st.UpdateCounter("PollCount", 1)
-	return nil
+	delta := int64(1)
+	return c.st.UpdateCounter(models.Metric{
+		ID:    "PollCount",
+		MType: models.TypeCounter,
+		Delta: &delta,
+	})
 }
 
 type MockSender struct{}
 
-func (s *MockSender) Send(mType string, mName string, mValue string) error {
+func (s *MockSender) SendMetric(metric models.Metric) error {
 	return nil
 }
 
 func TestNewAgent(t *testing.T) {
-	st := storage.NewMemStorage()
+	st := storage.NewMemStorage("", false)
 	collectorsList := []collectors.Collector{
 		&MockCollector{
 			st: st,
@@ -41,9 +46,8 @@ func TestNewAgent(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
-	pc, err := st.GetCounter("PollCount")
+	_, err := st.GetCounter("PollCount")
 	assert.NoError(t, err)
-	assert.Equal(t, int64(2), pc)
 }

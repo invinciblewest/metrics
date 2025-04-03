@@ -1,10 +1,16 @@
 package senders
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"errors"
 	"github.com/go-resty/resty/v2"
+	"github.com/invinciblewest/metrics/internal/logger"
+	"github.com/invinciblewest/metrics/internal/models"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type HTTPSender struct {
@@ -18,20 +24,44 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 		restyClient.SetTransport(client.Transport)
 	}
 
+	restyClient.
+		SetRetryCount(3).
+		SetRetryWaitTime(1 * time.Second).
+		AddRetryCondition(
+			func(r *resty.Response, err error) bool {
+				return err != nil || r.StatusCode() >= http.StatusInternalServerError
+			},
+		).
+		AddRetryHook(func(r *resty.Response, err error) {
+			logger.Log.Info("retrying request...")
+		})
+
 	return &HTTPSender{
 		serverAddr: serverAddr,
 		client:     restyClient,
 	}
 }
 
-func (s *HTTPSender) Send(mType string, mName string, mValue string) error {
-	path, err := url.JoinPath(s.serverAddr, "update", mType, mName, mValue)
+func (s *HTTPSender) SendMetric(metric models.Metric) error {
+	path, err := url.JoinPath(s.serverAddr, "update")
 	if err != nil {
 		return err
 	}
 
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+	if err = json.NewEncoder(gz).Encode(metric); err != nil {
+		return err
+	}
+	if err = gz.Close(); err != nil {
+		return err
+	}
+
 	resp, err := s.client.R().
-		SetHeader("Content-Type", "text/plain").
+		SetHeader("Content-Encoding", "gzip").
+		SetHeader("Accept-Encoding", "gzip").
+		SetHeader("Content-Type", "application/json").
+		SetBody(buf.Bytes()).
 		Post(path)
 
 	if err != nil {

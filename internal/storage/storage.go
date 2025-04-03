@@ -1,13 +1,25 @@
 package storage
 
-type GaugeList map[string]float64
-type CounterList map[string]int64
+import (
+	"errors"
+	"github.com/invinciblewest/metrics/internal/models"
+)
+
+type GaugeList map[string]models.Metric
+type CounterList map[string]models.Metric
+
+var (
+	ErrNotFound  = errors.New("not found")
+	ErrWrongType = errors.New("wrong type")
+)
 
 type Storage interface {
-	UpdateGauge(name string, value float64)
-	GetGauge(name string) (float64, error)
+	UpdateGauge(metric models.Metric) error
+	GetGauge(id string) (models.Metric, error)
 	GetGaugeList() GaugeList
-	UpdateCounter(name string, value int64)
-	GetCounter(name string) (int64, error)
+	UpdateCounter(metric models.Metric) error
+	GetCounter(id string) (models.Metric, error)
 	GetCounterList() CounterList
+	Save() error
+	Load() error
 }
