@@ -11,6 +11,7 @@ type Config struct {
 	StoreInterval   int    `env:"STORE_INTERVAL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         bool   `env:"RESTORE"`
+	DatabaseDSN     string `env:"DATABASE_DSN"`
 }
 
 func GetConfig() (Config, error) {
@@ -21,6 +22,7 @@ func GetConfig() (Config, error) {
 	flag.IntVar(&config.StoreInterval, "i", 300, "store interval")
 	flag.StringVar(&config.FileStoragePath, "f", "./storage.json", "storage path")
 	flag.BoolVar(&config.Restore, "r", true, "restore")
+	flag.StringVar(&config.DatabaseDSN, "d", "postgresql://root:secret@localhost:54321/metrics?sslmode=disable", "database dsn")
 	flag.Parse()
 
 	if err := env.Parse(&config); err != nil {

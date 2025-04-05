@@ -3,13 +3,13 @@ package services
 import (
 	"fmt"
 	"github.com/invinciblewest/metrics/internal/models"
-	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestNewMetricsService(t *testing.T) {
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	service := NewMetricsService(st)
 	assert.NotNil(t, service)
 }
@@ -45,7 +45,7 @@ func TestMetricsService_Update(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	service := NewMetricsService(st)
 
 	for _, test := range tests {
@@ -113,7 +113,7 @@ func TestMetricsService_Get(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	err := st.UpdateGauge(models.Metric{
 		ID:    "testG",
 		MType: models.TypeGauge,

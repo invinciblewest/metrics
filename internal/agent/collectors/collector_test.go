@@ -2,7 +2,7 @@ package collectors
 
 import (
 	"errors"
-	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -14,7 +14,7 @@ func (c *TestCollector) Collect() error {
 }
 
 func TestCollectMetrics(t *testing.T) {
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	t.Run("success", func(t *testing.T) {
 		c := NewRuntimeCollector(st)
 

@@ -22,4 +22,6 @@ type Storage interface {
 	GetCounterList() CounterList
 	Save() error
 	Load() error
+	Ping() error
+	Close()
 }
