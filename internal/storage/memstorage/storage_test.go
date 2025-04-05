@@ -1,14 +1,15 @@
-package storage
+package memstorage
 
 import (
 	"github.com/invinciblewest/metrics/internal/models"
+	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestNewMemStorage(t *testing.T) {
 	st := NewMemStorage("", false)
-	assert.Implements(t, (*Storage)(nil), st)
+	assert.Implements(t, (*storage.Storage)(nil), st)
 }
 
 func TestMemStorage_Gauge(t *testing.T) {
@@ -16,7 +17,7 @@ func TestMemStorage_Gauge(t *testing.T) {
 
 	f1 := 3.14
 	f2 := 14.3
-	list := GaugeList{
+	list := storage.GaugeList{
 		"test1": models.Metric{
 			ID:    "test1",
 			MType: models.TypeGauge,
@@ -63,7 +64,7 @@ func TestMemStorage_Counter(t *testing.T) {
 	c1 := int64(1)
 	c2 := int64(2)
 
-	list := CounterList{
+	list := storage.CounterList{
 		"test1": models.Metric{
 			ID:    "test1",
 			MType: models.TypeCounter,

@@ -2,7 +2,7 @@ package senders
 
 import (
 	"github.com/invinciblewest/metrics/internal/models"
-	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
@@ -12,7 +12,7 @@ func TestSendMetrics(t *testing.T) {
 	sender := createSender("http://localhost:8080")
 
 	t.Run("without metrics", func(t *testing.T) {
-		st := storage.NewMemStorage("", false)
+		st := memstorage.NewMemStorage("", false)
 		err := SendMetrics(st, sender)
 		assert.NoError(t, err)
 	})
@@ -27,7 +27,7 @@ func TestSendMetrics(t *testing.T) {
 			_ = server.Close()
 		}()
 
-		st := storage.NewMemStorage("", false)
+		st := memstorage.NewMemStorage("", false)
 		err := st.UpdateGauge(createGaugeMetric())
 		assert.NoError(t, err)
 		err = st.UpdateCounter(createCounterMetric())
@@ -37,7 +37,7 @@ func TestSendMetrics(t *testing.T) {
 		assert.NoError(t, err)
 	})
 	t.Run("error", func(t *testing.T) {
-		st := storage.NewMemStorage("", false)
+		st := memstorage.NewMemStorage("", false)
 		err := st.UpdateCounter(createCounterMetric())
 		assert.NoError(t, err)
 

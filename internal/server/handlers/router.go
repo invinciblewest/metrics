@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func GetRouter(handler *Handler) http.Handler {
+func GetRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(logger.Middleware())

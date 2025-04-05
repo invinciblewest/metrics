@@ -5,6 +5,7 @@ import (
 	"github.com/invinciblewest/metrics/internal/agent/senders"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -30,7 +31,7 @@ func (s *MockSender) SendMetric(metric models.Metric) error {
 }
 
 func TestNewAgent(t *testing.T) {
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	collectorsList := []collectors.Collector{
 		&MockCollector{
 			st: st,

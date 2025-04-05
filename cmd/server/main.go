@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/server/config"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
 	"github.com/invinciblewest/metrics/internal/server/services"
-	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
+	"github.com/invinciblewest/metrics/internal/storage/pgstorage"
+	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -24,11 +27,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	syncSave := cfg.StoreInterval == 0
-	st := storage.NewMemStorage(cfg.FileStoragePath, syncSave)
+	memStorage := memstorage.NewMemStorage(cfg.FileStoragePath, syncSave)
+	pgStorage := pgstorage.NewPGStorage(cfg.DatabaseDSN)
+	defer pgStorage.Close()
 
 	if cfg.Restore {
-		if err = st.Load(); err != nil {
+		if err = memStorage.Load(); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -44,12 +50,12 @@ func main() {
 			for {
 				select {
 				case <-ctx.Done():
-					if err = st.Save(); err != nil {
+					if err = memStorage.Save(); err != nil {
 						log.Fatal(err)
 					}
 					return
 				case <-ticker.C:
-					if err = st.Save(); err != nil {
+					if err = memStorage.Save(); err != nil {
 						log.Fatal(err)
 					}
 				}
@@ -57,13 +63,18 @@ func main() {
 		}()
 	}
 
-	router := handlers.GetRouter(
-		handlers.NewHandler(
-			services.NewMetricsService(st),
-		),
-	)
+	handler := handlers.NewHandler(services.NewMetricsService(memStorage))
+	router := handlers.GetRouter(handler)
+	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		if err := pgStorage.Ping(); err != nil {
+			logger.Log.Error("ping error", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 
-	if err := run(ctx, cfg.Address, router); err != nil {
+	if err := run(ctx, cfg.Address, router); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Log.Fatal("server error", zap.Error(err))
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
 	"github.com/invinciblewest/metrics/internal/server/services"
-	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -28,7 +28,7 @@ func TestHTTPSender_Send(t *testing.T) {
 		assert.Error(t, err)
 	})
 	t.Run("success", func(t *testing.T) {
-		st := storage.NewMemStorage("", false)
+		st := memstorage.NewMemStorage("", false)
 		srv := httptest.NewServer(
 			handlers.GetRouter(
 				handlers.NewHandler(
