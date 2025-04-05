@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"github.com/invinciblewest/metrics/internal/models"
 )
@@ -14,14 +15,14 @@ var (
 )
 
 type Storage interface {
-	UpdateGauge(metric models.Metric) error
-	GetGauge(id string) (models.Metric, error)
-	GetGaugeList() GaugeList
-	UpdateCounter(metric models.Metric) error
-	GetCounter(id string) (models.Metric, error)
-	GetCounterList() CounterList
-	Save() error
-	Load() error
-	Ping() error
-	Close()
+	UpdateGauge(ctx context.Context, metric models.Metric) error
+	GetGauge(ctx context.Context, id string) (models.Metric, error)
+	GetGaugeList(ctx context.Context) GaugeList
+	UpdateCounter(ctx context.Context, metric models.Metric) error
+	GetCounter(ctx context.Context, id string) (models.Metric, error)
+	GetCounterList(ctx context.Context) CounterList
+	Save(ctx context.Context) error
+	Load(ctx context.Context) error
+	Ping(ctx context.Context) error
+	Close(ctx context.Context)
 }

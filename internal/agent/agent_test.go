@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"github.com/golang/mock/gomock"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/collectors/mocks"
@@ -20,9 +21,9 @@ func TestNewAgent(t *testing.T) {
 	defer ctrl.Finish()
 
 	mCollector := mocks.NewMockCollector(ctrl)
-	mCollector.EXPECT().Collect().DoAndReturn(func() error {
+	mCollector.EXPECT().Collect(gomock.Any()).DoAndReturn(func(ctx context.Context) error {
 		delta := int64(1)
-		return st.UpdateCounter(models.Metric{
+		return st.UpdateCounter(ctx, models.Metric{
 			ID:    "PollCount",
 			MType: models.TypeCounter,
 			Delta: &delta,
@@ -30,7 +31,7 @@ func TestNewAgent(t *testing.T) {
 	}).AnyTimes()
 
 	mSender := mocks2.NewMockSender(ctrl)
-	mSender.EXPECT().SendMetric(gomock.Any()).Return(nil).AnyTimes()
+	mSender.EXPECT().SendMetric(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	collectorsList := []collectors.Collector{
 		mCollector,
@@ -47,6 +48,6 @@ func TestNewAgent(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	_, err := st.GetCounter("PollCount")
+	_, err := st.GetCounter(t.Context(), "PollCount")
 	assert.NoError(t, err)
 }

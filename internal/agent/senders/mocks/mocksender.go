@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,15 +36,15 @@ func (m *MockSender) EXPECT() *MockSenderMockRecorder {
 }
 
 // SendMetric mocks base method.
-func (m *MockSender) SendMetric(arg0 models.Metric) error {
+func (m *MockSender) SendMetric(arg0 context.Context, arg1 models.Metric) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendMetric", arg0)
+	ret := m.ctrl.Call(m, "SendMetric", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendMetric indicates an expected call of SendMetric.
-func (mr *MockSenderMockRecorder) SendMetric(arg0 interface{}) *gomock.Call {
+func (mr *MockSenderMockRecorder) SendMetric(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMetric", reflect.TypeOf((*MockSender)(nil).SendMetric), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMetric", reflect.TypeOf((*MockSender)(nil).SendMetric), arg0, arg1)
 }

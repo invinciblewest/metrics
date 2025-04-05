@@ -17,14 +17,15 @@ func TestNewHTTPSender(t *testing.T) {
 }
 
 func TestHTTPSender_Send(t *testing.T) {
+	ctx := t.Context()
 	t.Run("error create request", func(t *testing.T) {
 		s := createSender("https://%123:8080")
-		err := s.SendMetric(createMetric())
+		err := s.SendMetric(ctx, createMetric())
 		assert.Error(t, err)
 	})
 	t.Run("error send", func(t *testing.T) {
 		s := createSender("http://localhost:8080")
-		err := s.SendMetric(createMetric())
+		err := s.SendMetric(ctx, createMetric())
 		assert.Error(t, err)
 	})
 	t.Run("success", func(t *testing.T) {
@@ -38,7 +39,7 @@ func TestHTTPSender_Send(t *testing.T) {
 		)
 		defer srv.Close()
 		s := createSender(srv.URL)
-		err := s.SendMetric(createMetric())
+		err := s.SendMetric(ctx, createMetric())
 		assert.NoError(t, err)
 	})
 }

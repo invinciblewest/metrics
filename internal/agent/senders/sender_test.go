@@ -9,11 +9,12 @@ import (
 )
 
 func TestSendMetrics(t *testing.T) {
+	ctx := t.Context()
 	sender := createSender("http://localhost:8080")
 
 	t.Run("without metrics", func(t *testing.T) {
 		st := memstorage.NewMemStorage("", false)
-		err := SendMetrics(st, sender)
+		err := SendMetrics(ctx, st, sender)
 		assert.NoError(t, err)
 	})
 	t.Run("success", func(t *testing.T) {
@@ -28,25 +29,25 @@ func TestSendMetrics(t *testing.T) {
 		}()
 
 		st := memstorage.NewMemStorage("", false)
-		err := st.UpdateGauge(createGaugeMetric())
+		err := st.UpdateGauge(ctx, createGaugeMetric())
 		assert.NoError(t, err)
-		err = st.UpdateCounter(createCounterMetric())
+		err = st.UpdateCounter(ctx, createCounterMetric())
 		assert.NoError(t, err)
 
-		err = SendMetrics(st, sender)
+		err = SendMetrics(ctx, st, sender)
 		assert.NoError(t, err)
 	})
 	t.Run("error", func(t *testing.T) {
 		st := memstorage.NewMemStorage("", false)
-		err := st.UpdateCounter(createCounterMetric())
+		err := st.UpdateCounter(ctx, createCounterMetric())
 		assert.NoError(t, err)
 
-		err = SendMetrics(st, sender)
+		err = SendMetrics(ctx, st, sender)
 		assert.Error(t, err)
 
-		err = st.UpdateGauge(createGaugeMetric())
+		err = st.UpdateGauge(ctx, createGaugeMetric())
 		assert.NoError(t, err)
-		err = SendMetrics(st, sender)
+		err = SendMetrics(ctx, st, sender)
 		assert.Error(t, err)
 	})
 }

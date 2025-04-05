@@ -173,16 +173,17 @@ func TestMetricsHandler_UpdateFromJSON(t *testing.T) {
 }
 
 func TestMetricsHandler_GetString(t *testing.T) {
+	ctx := t.Context()
 	st := memstorage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
-	err := st.UpdateGauge(models.Metric{
+	err := st.UpdateGauge(ctx, models.Metric{
 		ID:    "testG",
 		MType: models.TypeGauge,
 		Value: &testG,
 	})
 	assert.NoError(t, err)
-	err = st.UpdateCounter(models.Metric{
+	err = st.UpdateCounter(ctx, models.Metric{
 		ID:    "testC",
 		MType: models.TypeCounter,
 		Delta: &testC,
@@ -321,16 +322,17 @@ func TestMetricsHandler_GetJSON(t *testing.T) {
 		},
 	}
 
+	ctx := t.Context()
 	st := memstorage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
-	err := st.UpdateGauge(models.Metric{
+	err := st.UpdateGauge(ctx, models.Metric{
 		ID:    "testG",
 		MType: models.TypeGauge,
 		Value: &testG,
 	})
 	assert.NoError(t, err)
-	err = st.UpdateCounter(models.Metric{
+	err = st.UpdateCounter(ctx, models.Metric{
 		ID:    "testC",
 		MType: models.TypeCounter,
 		Delta: &testC,

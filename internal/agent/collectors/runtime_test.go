@@ -14,11 +14,12 @@ func TestNewRuntimeCollector(t *testing.T) {
 }
 
 func TestRuntimeCollector_Collect(t *testing.T) {
+	ctx := t.Context()
 	st := memstorage.NewMemStorage("", false)
 	c := NewRuntimeCollector(st)
 
 	t.Run("collect error", func(t *testing.T) {
-		err := c.Collect()
+		err := c.Collect(ctx)
 		require.NoError(t, err)
 	})
 
@@ -54,7 +55,7 @@ func TestRuntimeCollector_Collect(t *testing.T) {
 			"RandomValue",
 		}
 
-		gaugeList := st.GetGaugeList()
+		gaugeList := st.GetGaugeList(ctx)
 		for _, v := range gaugeKeyList {
 			assert.Contains(t, gaugeList, v)
 		}
@@ -64,7 +65,7 @@ func TestRuntimeCollector_Collect(t *testing.T) {
 			"PollCount",
 		}
 
-		counterList := st.GetCounterList()
+		counterList := st.GetCounterList(ctx)
 		for _, v := range counterKeyList {
 			assert.Contains(t, counterList, v)
 		}

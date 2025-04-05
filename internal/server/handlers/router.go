@@ -32,6 +32,7 @@ func GetRouter(handler *Handler) *chi.Mux {
 		r.Post("/", handler.GetMetricJSON)
 		r.Get("/{type}/{name}", handler.GetMetric)
 	})
+	r.Get("/ping", handler.PingStorage)
 
 	return r
 }

@@ -1,25 +1,26 @@
 package senders
 
 import (
+	"context"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 )
 
 type Sender interface {
-	SendMetric(metric models.Metric) error
+	SendMetric(ctx context.Context, metric models.Metric) error
 }
 
-func SendMetrics(st storage.Storage, senders ...Sender) error {
+func SendMetrics(ctx context.Context, st storage.Storage, senders ...Sender) error {
 	logger.Log.Info("sending metrics to server...")
 	for _, s := range senders {
-		for _, v := range st.GetGaugeList() {
-			if err := s.SendMetric(v); err != nil {
+		for _, v := range st.GetGaugeList(ctx) {
+			if err := s.SendMetric(ctx, v); err != nil {
 				return err
 			}
 		}
-		for _, v := range st.GetCounterList() {
-			if err := s.SendMetric(v); err != nil {
+		for _, v := range st.GetCounterList(ctx) {
+			if err := s.SendMetric(ctx, v); err != nil {
 				return err
 			}
 		}

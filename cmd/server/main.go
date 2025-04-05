@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/server/config"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
 	"github.com/invinciblewest/metrics/internal/server/services"
+	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/invinciblewest/metrics/internal/storage/pgstorage"
 	_ "github.com/lib/pq"
@@ -19,27 +21,56 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal("failed to get config", zap.Error(err))
 	}
 	err = logger.Initialize(cfg.LogLevel)
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal("failed to initialize logger", zap.Error(err))
 	}
 
-	syncSave := cfg.StoreInterval == 0
-	memStorage := memstorage.NewMemStorage(cfg.FileStoragePath, syncSave)
-	pgStorage := pgstorage.NewPGStorage(cfg.DatabaseDSN)
-	defer pgStorage.Close()
+	var st storage.Storage
 
-	if cfg.Restore {
-		if err = memStorage.Load(); err != nil {
-			log.Fatal(err)
+	if cfg.DatabaseDSN != "" {
+		logger.Log.Info("using PostgreSQL storage")
+
+		db, err := sql.Open("postgres", cfg.DatabaseDSN)
+		if err != nil {
+			logger.Log.Fatal("failed to connect to database", zap.Error(err))
+		}
+
+		_, err = db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS metrics (
+			id TEXT NOT NULL,
+			type TEXT NOT NULL,
+			value DOUBLE PRECISION
+		);`)
+		if err != nil {
+			logger.Log.Fatal("failed to create table", zap.Error(err))
+		}
+
+		_, err = db.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS unique_id_type ON metrics (id, type);`)
+		if err != nil {
+			logger.Log.Fatal("failed to create index", zap.Error(err))
+		}
+
+		st = pgstorage.NewPGStorage(db)
+		defer st.Close(ctx)
+	} else {
+		logger.Log.Info("using in-memory storage")
+		syncSave := cfg.StoreInterval == 0
+		st = memstorage.NewMemStorage(cfg.FileStoragePath, syncSave)
+
+		if cfg.Restore {
+			if err = st.Load(ctx); err != nil {
+				logger.Log.Error("failed to load metrics from file", zap.Error(err))
+			}
 		}
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	if cfg.StoreInterval > 0 {
@@ -50,12 +81,12 @@ func main() {
 			for {
 				select {
 				case <-ctx.Done():
-					if err = memStorage.Save(); err != nil {
+					if err = st.Save(ctx); err != nil {
 						log.Fatal(err)
 					}
 					return
 				case <-ticker.C:
-					if err = memStorage.Save(); err != nil {
+					if err = st.Save(ctx); err != nil {
 						log.Fatal(err)
 					}
 				}
@@ -63,16 +94,8 @@ func main() {
 		}()
 	}
 
-	handler := handlers.NewHandler(services.NewMetricsService(memStorage))
+	handler := handlers.NewHandler(services.NewMetricsService(st))
 	router := handlers.GetRouter(handler)
-	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		if err := pgStorage.Ping(); err != nil {
-			logger.Log.Error("ping error", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	})
 
 	if err := run(ctx, cfg.Address, router); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Log.Fatal("server error", zap.Error(err))

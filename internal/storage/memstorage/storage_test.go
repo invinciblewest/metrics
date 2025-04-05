@@ -13,6 +13,7 @@ func TestNewMemStorage(t *testing.T) {
 }
 
 func TestMemStorage_Gauge(t *testing.T) {
+	ctx := t.Context()
 	st := NewMemStorage("", false)
 
 	f1 := 3.14
@@ -31,12 +32,12 @@ func TestMemStorage_Gauge(t *testing.T) {
 	}
 	t.Run("update gauge", func(t *testing.T) {
 		for _, v := range list {
-			err := st.UpdateGauge(v)
+			err := st.UpdateGauge(ctx, v)
 			assert.NoError(t, err)
 		}
 	})
 	t.Run("update gauge error", func(t *testing.T) {
-		err := st.UpdateGauge(models.Metric{
+		err := st.UpdateGauge(ctx, models.Metric{
 			ID:    "test3",
 			MType: models.TypeCounter,
 		})
@@ -44,21 +45,22 @@ func TestMemStorage_Gauge(t *testing.T) {
 	})
 	t.Run("get gauge", func(t *testing.T) {
 		for k, v := range list {
-			val, err := st.GetGauge(k)
+			val, err := st.GetGauge(ctx, k)
 			assert.NoError(t, err)
 			assert.Equal(t, v.Value, val.Value)
 		}
 	})
 	t.Run("get gauge error", func(t *testing.T) {
-		_, err := st.GetGauge("unknown")
+		_, err := st.GetGauge(ctx, "unknown")
 		assert.Error(t, err)
 	})
 	t.Run("get gauge list", func(t *testing.T) {
-		assert.Equal(t, list, st.GetGaugeList())
+		assert.Equal(t, list, st.GetGaugeList(ctx))
 	})
 }
 
 func TestMemStorage_Counter(t *testing.T) {
+	ctx := t.Context()
 	st := NewMemStorage("", false)
 
 	c1 := int64(1)
@@ -78,12 +80,12 @@ func TestMemStorage_Counter(t *testing.T) {
 	}
 	t.Run("update counter", func(t *testing.T) {
 		for _, v := range list {
-			err := st.UpdateCounter(v)
+			err := st.UpdateCounter(ctx, v)
 			assert.NoError(t, err)
 		}
 	})
 	t.Run("update counter error", func(t *testing.T) {
-		err := st.UpdateCounter(models.Metric{
+		err := st.UpdateCounter(ctx, models.Metric{
 			ID:    "test3",
 			MType: models.TypeGauge,
 		})
@@ -91,27 +93,27 @@ func TestMemStorage_Counter(t *testing.T) {
 	})
 	t.Run("get counter", func(t *testing.T) {
 		for k, v := range list {
-			val, err := st.GetCounter(k)
+			val, err := st.GetCounter(ctx, k)
 			assert.NoError(t, err)
 			assert.Equal(t, v.Delta, val.Delta)
 		}
 	})
 	t.Run("get counter error", func(t *testing.T) {
-		_, err := st.GetCounter("unknown")
+		_, err := st.GetCounter(ctx, "unknown")
 		assert.Error(t, err)
 	})
 	t.Run("get counter list", func(t *testing.T) {
-		assert.Equal(t, list, st.GetCounterList())
+		assert.Equal(t, list, st.GetCounterList(ctx))
 	})
 	t.Run("increment counter", func(t *testing.T) {
 		for _, v := range list {
-			err := st.UpdateCounter(v)
+			err := st.UpdateCounter(ctx, v)
 			assert.NoError(t, err)
 		}
 	})
 	t.Run("get incremented counter", func(t *testing.T) {
 		for k, v := range list {
-			val, err := st.GetCounter(k)
+			val, err := st.GetCounter(ctx, k)
 			assert.NoError(t, err)
 			assert.Equal(t, *v.Delta, *val.Delta)
 		}
