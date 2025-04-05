@@ -51,7 +51,7 @@ func (st *PGStorage) GetGaugeList(ctx context.Context) storage.GaugeList {
 	}
 	defer rows.Close()
 
-	var gauges storage.GaugeList
+	gauges := make(storage.GaugeList)
 	for rows.Next() {
 		var metric models.Metric
 		err := rows.Scan(&metric.ID, &metric.MType, &metric.Value)
@@ -99,7 +99,7 @@ func (st *PGStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	}
 	defer rows.Close()
 
-	var counters storage.CounterList
+	counters := make(storage.CounterList)
 	for rows.Next() {
 		var metric models.Metric
 		err := rows.Scan(&metric.ID, &metric.MType, &metric.Delta)
