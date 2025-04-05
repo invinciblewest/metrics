@@ -1,6 +1,7 @@
 package memstorage
 
 import (
+	"context"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,7 @@ func TestNewMemStorage(t *testing.T) {
 }
 
 func TestMemStorage_Gauge(t *testing.T) {
-	ctx := t.Context()
+	ctx := context.TODO()
 	st := NewMemStorage("", false)
 
 	f1 := 3.14
@@ -60,7 +61,7 @@ func TestMemStorage_Gauge(t *testing.T) {
 }
 
 func TestMemStorage_Counter(t *testing.T) {
-	ctx := t.Context()
+	ctx := context.TODO()
 	st := NewMemStorage("", false)
 
 	c1 := int64(1)

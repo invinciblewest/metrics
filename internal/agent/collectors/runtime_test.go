@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,7 @@ func TestNewRuntimeCollector(t *testing.T) {
 }
 
 func TestRuntimeCollector_Collect(t *testing.T) {
-	ctx := t.Context()
+	ctx := context.TODO()
 	st := memstorage.NewMemStorage("", false)
 	c := NewRuntimeCollector(st)
 

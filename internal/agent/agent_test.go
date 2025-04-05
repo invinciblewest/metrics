@@ -48,6 +48,6 @@ func TestNewAgent(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	_, err := st.GetCounter(t.Context(), "PollCount")
+	_, err := st.GetCounter(context.TODO(), "PollCount")
 	assert.NoError(t, err)
 }

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
@@ -45,7 +46,7 @@ func TestMetricsService_Update(t *testing.T) {
 		},
 	}
 
-	ctx := t.Context()
+	ctx := context.TODO()
 	st := memstorage.NewMemStorage("", false)
 	service := NewMetricsService(st)
 
@@ -114,7 +115,7 @@ func TestMetricsService_Get(t *testing.T) {
 		},
 	}
 
-	ctx := t.Context()
+	ctx := context.TODO()
 	st := memstorage.NewMemStorage("", false)
 	err := st.UpdateGauge(ctx, models.Metric{
 		ID:    "testG",

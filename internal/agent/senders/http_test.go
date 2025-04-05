@@ -1,6 +1,7 @@
 package senders
 
 import (
+	"context"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
 	"github.com/invinciblewest/metrics/internal/server/services"
@@ -17,7 +18,7 @@ func TestNewHTTPSender(t *testing.T) {
 }
 
 func TestHTTPSender_Send(t *testing.T) {
-	ctx := t.Context()
+	ctx := context.TODO()
 	t.Run("error create request", func(t *testing.T) {
 		s := createSender("https://%123:8080")
 		err := s.SendMetric(ctx, createMetric())

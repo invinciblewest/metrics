@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/invinciblewest/metrics/internal/agent/collectors/mocks"
@@ -10,7 +11,7 @@ import (
 )
 
 func TestCollectMetrics(t *testing.T) {
-	ctx := t.Context()
+	ctx := context.TODO()
 	st := memstorage.NewMemStorage("", false)
 	t.Run("success", func(t *testing.T) {
 		c := NewRuntimeCollector(st)

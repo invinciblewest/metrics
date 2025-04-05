@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"github.com/go-resty/resty/v2"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/server/services"
@@ -173,7 +174,7 @@ func TestMetricsHandler_UpdateFromJSON(t *testing.T) {
 }
 
 func TestMetricsHandler_GetString(t *testing.T) {
-	ctx := t.Context()
+	ctx := context.TODO()
 	st := memstorage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
@@ -322,7 +323,7 @@ func TestMetricsHandler_GetJSON(t *testing.T) {
 		},
 	}
 
-	ctx := t.Context()
+	ctx := context.TODO()
 	st := memstorage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)

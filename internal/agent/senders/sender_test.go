@@ -1,6 +1,7 @@
 package senders
 
 import (
+	"context"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestSendMetrics(t *testing.T) {
-	ctx := t.Context()
+	ctx := context.TODO()
 	sender := createSender("http://localhost:8080")
 
 	t.Run("without metrics", func(t *testing.T) {
