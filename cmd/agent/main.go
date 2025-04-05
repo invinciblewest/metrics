@@ -6,7 +6,7 @@ import (
 	"github.com/invinciblewest/metrics/internal/agent/config"
 	"github.com/invinciblewest/metrics/internal/agent/senders"
 	"github.com/invinciblewest/metrics/internal/logger"
-	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"log"
 	"net/http"
 )
@@ -22,7 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	collectorsList := []collectors.Collector{
 		collectors.NewRuntimeCollector(st),
 	}

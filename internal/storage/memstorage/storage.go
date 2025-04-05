@@ -1,19 +1,21 @@
-package storage
+package memstorage
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
+	"github.com/invinciblewest/metrics/internal/storage"
 	"go.uber.org/zap"
 	"os"
 	"sync"
 )
 
 type MemStorage struct {
-	Gauges   GaugeList   `json:"gauges"`
-	Counters CounterList `json:"counters"`
+	Gauges   storage.GaugeList   `json:"gauges"`
+	Counters storage.CounterList `json:"counters"`
 	path     string
 	syncSave bool
 	mu       sync.RWMutex
@@ -21,14 +23,14 @@ type MemStorage struct {
 
 func NewMemStorage(path string, syncSave bool) *MemStorage {
 	return &MemStorage{
-		Gauges:   make(GaugeList),
-		Counters: make(CounterList),
+		Gauges:   make(storage.GaugeList),
+		Counters: make(storage.CounterList),
 		path:     path,
 		syncSave: syncSave,
 	}
 }
 
-func (st *MemStorage) UpdateGauge(metric models.Metric) error {
+func (st *MemStorage) UpdateGauge(ctx context.Context, metric models.Metric) error {
 	if metric.MType != models.TypeGauge {
 		return errors.New("wrong type")
 	}
@@ -38,12 +40,12 @@ func (st *MemStorage) UpdateGauge(metric models.Metric) error {
 
 	st.Gauges[metric.ID] = metric
 	if st.syncSave {
-		return st.Save()
+		return st.Save(ctx)
 	}
 	return nil
 }
 
-func (st *MemStorage) GetGauge(id string) (models.Metric, error) {
+func (st *MemStorage) GetGauge(ctx context.Context, id string) (models.Metric, error) {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
@@ -51,18 +53,18 @@ func (st *MemStorage) GetGauge(id string) (models.Metric, error) {
 	if exists {
 		return value, nil
 	} else {
-		return models.Metric{}, ErrNotFound
+		return models.Metric{}, storage.ErrNotFound
 	}
 }
 
-func (st *MemStorage) GetGaugeList() GaugeList {
+func (st *MemStorage) GetGaugeList(ctx context.Context) storage.GaugeList {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
 	return st.Gauges
 }
 
-func (st *MemStorage) UpdateCounter(metric models.Metric) error {
+func (st *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) error {
 	if metric.MType != models.TypeCounter {
 		return errors.New("wrong type")
 	}
@@ -78,12 +80,12 @@ func (st *MemStorage) UpdateCounter(metric models.Metric) error {
 	st.Counters[metric.ID] = metric
 
 	if st.syncSave {
-		return st.Save()
+		return st.Save(ctx)
 	}
 	return nil
 }
 
-func (st *MemStorage) GetCounter(id string) (models.Metric, error) {
+func (st *MemStorage) GetCounter(ctx context.Context, id string) (models.Metric, error) {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
@@ -91,18 +93,18 @@ func (st *MemStorage) GetCounter(id string) (models.Metric, error) {
 	if exists {
 		return value, nil
 	} else {
-		return models.Metric{}, ErrNotFound
+		return models.Metric{}, storage.ErrNotFound
 	}
 }
 
-func (st *MemStorage) GetCounterList() CounterList {
+func (st *MemStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
 	return st.Counters
 }
 
-func (st *MemStorage) Save() error {
+func (st *MemStorage) Save(ctx context.Context) error {
 	if st.path == "" {
 		return nil
 	}
@@ -128,7 +130,7 @@ func (st *MemStorage) Save() error {
 	return nil
 }
 
-func (st *MemStorage) Load() error {
+func (st *MemStorage) Load(ctx context.Context) error {
 	if st.path == "" {
 		return nil
 	}
@@ -154,6 +156,14 @@ func (st *MemStorage) Load() error {
 	}
 
 	return nil
+}
+
+func (st *MemStorage) Ping(ctx context.Context) error {
+	return nil
+}
+
+func (st *MemStorage) Close(ctx context.Context) {
+
 }
 
 func closeFile(file *os.File) {

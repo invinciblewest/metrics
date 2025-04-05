@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"github.com/go-resty/resty/v2"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/server/services"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -63,7 +65,7 @@ func TestMetricsHandler_UpdateFromQuery(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	server := httptest.NewServer(newRouter(st))
 	defer server.Close()
 
@@ -146,7 +148,7 @@ func TestMetricsHandler_UpdateFromJSON(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	server := httptest.NewServer(newRouter(st))
 	defer server.Close()
 	client := resty.New()
@@ -172,16 +174,17 @@ func TestMetricsHandler_UpdateFromJSON(t *testing.T) {
 }
 
 func TestMetricsHandler_GetString(t *testing.T) {
-	st := storage.NewMemStorage("", false)
+	ctx := context.TODO()
+	st := memstorage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
-	err := st.UpdateGauge(models.Metric{
+	err := st.UpdateGauge(ctx, models.Metric{
 		ID:    "testG",
 		MType: models.TypeGauge,
 		Value: &testG,
 	})
 	assert.NoError(t, err)
-	err = st.UpdateCounter(models.Metric{
+	err = st.UpdateCounter(ctx, models.Metric{
 		ID:    "testC",
 		MType: models.TypeCounter,
 		Delta: &testC,
@@ -320,16 +323,17 @@ func TestMetricsHandler_GetJSON(t *testing.T) {
 		},
 	}
 
-	st := storage.NewMemStorage("", false)
+	ctx := context.TODO()
+	st := memstorage.NewMemStorage("", false)
 	testG := 3.14
 	testC := int64(314)
-	err := st.UpdateGauge(models.Metric{
+	err := st.UpdateGauge(ctx, models.Metric{
 		ID:    "testG",
 		MType: models.TypeGauge,
 		Value: &testG,
 	})
 	assert.NoError(t, err)
-	err = st.UpdateCounter(models.Metric{
+	err = st.UpdateCounter(ctx, models.Metric{
 		ID:    "testC",
 		MType: models.TypeCounter,
 		Delta: &testC,

@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func GetRouter(handler *Handler) http.Handler {
+func GetRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(logger.Middleware())
@@ -32,6 +32,7 @@ func GetRouter(handler *Handler) http.Handler {
 		r.Post("/", handler.GetMetricJSON)
 		r.Get("/{type}/{name}", handler.GetMetric)
 	})
+	r.Get("/ping", handler.PingStorage)
 
 	return r
 }

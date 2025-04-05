@@ -3,6 +3,7 @@ package senders
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/go-resty/resty/v2"
@@ -42,7 +43,7 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 	}
 }
 
-func (s *HTTPSender) SendMetric(metric models.Metric) error {
+func (s *HTTPSender) SendMetric(ctx context.Context, metric models.Metric) error {
 	path, err := url.JoinPath(s.serverAddr, "update")
 	if err != nil {
 		return err
@@ -62,6 +63,7 @@ func (s *HTTPSender) SendMetric(metric models.Metric) error {
 		SetHeader("Accept-Encoding", "gzip").
 		SetHeader("Content-Type", "application/json").
 		SetBody(buf.Bytes()).
+		SetContext(ctx).
 		Post(path)
 
 	if err != nil {

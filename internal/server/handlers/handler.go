@@ -23,6 +23,8 @@ func NewHandler(service services.MetricsService) *Handler {
 }
 
 func (h *Handler) UpdateMetric(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
 	metricValue := chi.URLParam(r, "value")
@@ -56,7 +58,7 @@ func (h *Handler) UpdateMetric(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := h.service.Update(metric); err != nil {
+	if _, err := h.service.Update(ctx, metric); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -65,6 +67,7 @@ func (h *Handler) UpdateMetric(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateMetricJSON(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	if r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -81,7 +84,7 @@ func (h *Handler) UpdateMetricJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedMetrics, err := h.service.Update(metrics)
+	updatedMetrics, err := h.service.Update(ctx, metrics)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -103,10 +106,11 @@ func (h *Handler) UpdateMetricJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
 
-	metrics, err := h.service.Get(metricType, metricName)
+	metrics, err := h.service.Get(ctx, metricType, metricName)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) || errors.Is(err, storage.ErrWrongType) {
 			w.WriteHeader(http.StatusNotFound)
@@ -135,6 +139,7 @@ func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	if r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -151,7 +156,7 @@ func (h *Handler) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.service.Get(metrics.MType, metrics.ID)
+	result, err := h.service.Get(ctx, metrics.MType, metrics.ID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) || errors.Is(err, storage.ErrWrongType) {
 			w.WriteHeader(http.StatusNotFound)
@@ -172,5 +177,14 @@ func (h *Handler) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+}
+
+func (h *Handler) PingStorage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if h.service.PingStorage(ctx) {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

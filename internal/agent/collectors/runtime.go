@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"context"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
@@ -20,7 +21,7 @@ func NewRuntimeCollector(st storage.Storage) *RuntimeCollector {
 	}
 }
 
-func (c *RuntimeCollector) Collect() error {
+func (c *RuntimeCollector) Collect(ctx context.Context) error {
 	logger.Log.Info("collecting metrics...",
 		zap.String("collector", "runtime"),
 	)
@@ -67,7 +68,7 @@ func (c *RuntimeCollector) Collect() error {
 			} else if field.CanUint() {
 				fieldValue = float64(field.Uint())
 			}
-			err := c.st.UpdateGauge(models.Metric{
+			err := c.st.UpdateGauge(ctx, models.Metric{
 				ID:    key,
 				MType: models.TypeGauge,
 				Value: &fieldValue,
@@ -79,7 +80,7 @@ func (c *RuntimeCollector) Collect() error {
 	}
 
 	randomFloat := rand.Float64()
-	err := c.st.UpdateGauge(models.Metric{
+	err := c.st.UpdateGauge(ctx, models.Metric{
 		ID:    "RandomValue",
 		MType: models.TypeGauge,
 		Value: &randomFloat,
@@ -88,7 +89,7 @@ func (c *RuntimeCollector) Collect() error {
 		return err
 	}
 	counterValue := int64(1)
-	err = c.st.UpdateCounter(models.Metric{
+	err = c.st.UpdateCounter(ctx, models.Metric{
 		ID:    "PollCount",
 		MType: models.TypeCounter,
 		Delta: &counterValue,
@@ -97,7 +98,7 @@ func (c *RuntimeCollector) Collect() error {
 		return err
 	}
 
-	pc, err := c.st.GetCounter("PollCount")
+	pc, err := c.st.GetCounter(ctx, "PollCount")
 	if err != nil {
 		return err
 	}

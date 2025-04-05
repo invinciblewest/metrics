@@ -1,24 +1,26 @@
 package collectors
 
 import (
-	"github.com/invinciblewest/metrics/internal/storage"
+	"context"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestNewRuntimeCollector(t *testing.T) {
-	st := storage.NewMemStorage("", false)
+	st := memstorage.NewMemStorage("", false)
 	c := NewRuntimeCollector(st)
 	assert.Implements(t, (*Collector)(nil), c)
 }
 
 func TestRuntimeCollector_Collect(t *testing.T) {
-	st := storage.NewMemStorage("", false)
+	ctx := context.TODO()
+	st := memstorage.NewMemStorage("", false)
 	c := NewRuntimeCollector(st)
 
 	t.Run("collect error", func(t *testing.T) {
-		err := c.Collect()
+		err := c.Collect(ctx)
 		require.NoError(t, err)
 	})
 
@@ -54,7 +56,7 @@ func TestRuntimeCollector_Collect(t *testing.T) {
 			"RandomValue",
 		}
 
-		gaugeList := st.GetGaugeList()
+		gaugeList := st.GetGaugeList(ctx)
 		for _, v := range gaugeKeyList {
 			assert.Contains(t, gaugeList, v)
 		}
@@ -64,7 +66,7 @@ func TestRuntimeCollector_Collect(t *testing.T) {
 			"PollCount",
 		}
 
-		counterList := st.GetCounterList()
+		counterList := st.GetCounterList(ctx)
 		for _, v := range counterKeyList {
 			assert.Contains(t, counterList, v)
 		}
