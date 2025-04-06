@@ -24,7 +24,9 @@ func GetRouter(handler *Handler) *chi.Mux {
 		}
 	})
 
-	r.Post("/updates", handler.UpdateMetricsBatch)
+	r.Route("/updates", func(r chi.Router) {
+		r.Post("/", handler.UpdateMetricsBatch)
+	})
 	r.Route("/update", func(r chi.Router) {
 		r.Post("/", handler.UpdateMetricJSON)
 		r.Post("/{type}/{name}/{value}", handler.UpdateMetric)
