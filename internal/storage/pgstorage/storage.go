@@ -80,13 +80,17 @@ func (st *PGStorage) UpdateCounter(ctx context.Context, metric models.Metric) er
 func (st *PGStorage) GetCounter(ctx context.Context, id string) (models.Metric, error) {
 	row := st.db.QueryRowContext(ctx, `SELECT id, type, value FROM metrics WHERE id = $1 AND type = 'counter'`, id)
 	var metric models.Metric
-	err := row.Scan(&metric.ID, &metric.MType, &metric.Delta)
+	var value float64
+	err := row.Scan(&metric.ID, &metric.MType, &value)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.Metric{}, storage.ErrNotFound
 		}
 		return models.Metric{}, err
 	}
+
+	delta := int64(value)
+	metric.Delta = &delta
 
 	return metric, nil
 }
