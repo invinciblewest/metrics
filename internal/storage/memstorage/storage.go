@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
@@ -32,7 +31,7 @@ func NewMemStorage(path string, syncSave bool) *MemStorage {
 
 func (st *MemStorage) UpdateGauge(ctx context.Context, metric models.Metric) error {
 	if metric.MType != models.TypeGauge {
-		return errors.New("wrong type")
+		return storage.ErrWrongType
 	}
 
 	st.mu.Lock()
@@ -66,7 +65,7 @@ func (st *MemStorage) GetGaugeList(ctx context.Context) storage.GaugeList {
 
 func (st *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) error {
 	if metric.MType != models.TypeCounter {
-		return errors.New("wrong type")
+		return storage.ErrWrongType
 	}
 
 	st.mu.Lock()
@@ -102,6 +101,28 @@ func (st *MemStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	defer st.mu.Unlock()
 
 	return st.Counters
+}
+
+func (st *MemStorage) UpdateBatch(ctx context.Context, metrics []models.Metric) error {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
+	for _, metric := range metrics {
+		switch metric.MType {
+		case models.TypeGauge:
+			st.Gauges[metric.ID] = metric
+		case models.TypeCounter:
+			currentMetric, exists := st.Counters[metric.ID]
+			if exists {
+				*metric.Delta += *currentMetric.Delta
+			}
+			st.Counters[metric.ID] = metric
+		default:
+			return storage.ErrWrongType
+		}
+	}
+
+	return nil
 }
 
 func (st *MemStorage) Save(ctx context.Context) error {

@@ -36,7 +36,7 @@ func (m *MockSender) EXPECT() *MockSenderMockRecorder {
 }
 
 // SendMetric mocks base method.
-func (m *MockSender) SendMetric(arg0 context.Context, arg1 models.Metric) error {
+func (m *MockSender) SendMetric(arg0 context.Context, arg1 []models.Metric) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendMetric", arg0, arg1)
 	ret0, _ := ret[0].(error)

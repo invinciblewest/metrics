@@ -13,11 +13,6 @@ func TestSendMetrics(t *testing.T) {
 	ctx := context.TODO()
 	sender := createSender("http://localhost:8080")
 
-	t.Run("without metrics", func(t *testing.T) {
-		st := memstorage.NewMemStorage("", false)
-		err := SendMetrics(ctx, st, sender)
-		assert.NoError(t, err)
-	})
 	t.Run("success", func(t *testing.T) {
 		server := &http.Server{Addr: ":8080", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)

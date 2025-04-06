@@ -20,10 +20,11 @@ func GetRouter(handler *Handler) *chi.Mux {
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte("<html><body><h1>Metrics</h1></body></html>"))
 		if err != nil {
-			logger.Log.Info("main page error", zap.Error(err))
+			logger.Log.Error("main page error", zap.Error(err))
 		}
 	})
 
+	r.Post("/updates", handler.UpdateMetricsBatch)
 	r.Route("/update", func(r chi.Router) {
 		r.Post("/", handler.UpdateMetricJSON)
 		r.Post("/{type}/{name}/{value}", handler.UpdateMetric)

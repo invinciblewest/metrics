@@ -40,6 +40,10 @@ func (ms *MetricsService) Update(ctx context.Context, metrics models.Metric) (mo
 	return metrics, nil
 }
 
+func (ms *MetricsService) UpdateBatch(ctx context.Context, metrics []models.Metric) error {
+	return ms.st.UpdateBatch(ctx, metrics)
+}
+
 func (ms *MetricsService) Get(ctx context.Context, mType, id string) (models.Metric, error) {
 	var result models.Metric
 

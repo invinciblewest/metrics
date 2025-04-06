@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
+	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/server/services"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 )
@@ -103,6 +105,34 @@ func (h *Handler) UpdateMetricJSON(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func (h *Handler) UpdateMetricsBatch(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if r.Header.Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var metrics []models.Metric
+	if err := json.NewDecoder(r.Body).Decode(&metrics); err != nil {
+		logger.Log.Error("failed to decode metrics", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if len(metrics) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := h.service.UpdateBatch(ctx, metrics); err != nil {
+		logger.Log.Error("failed to update batch", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {

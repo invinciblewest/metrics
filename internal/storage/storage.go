@@ -21,6 +21,7 @@ type Storage interface {
 	UpdateCounter(ctx context.Context, metric models.Metric) error
 	GetCounter(ctx context.Context, id string) (models.Metric, error)
 	GetCounterList(ctx context.Context) CounterList
+	UpdateBatch(ctx context.Context, metrics []models.Metric) error
 	Save(ctx context.Context) error
 	Load(ctx context.Context) error
 	Ping(ctx context.Context) error

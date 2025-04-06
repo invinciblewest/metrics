@@ -116,6 +116,40 @@ func (st *PGStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	return counters
 }
 
+func (st *PGStorage) UpdateBatch(ctx context.Context, metrics []models.Metric) error {
+	tx, err := st.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func(tx *sql.Tx) {
+		err = tx.Rollback()
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			logger.Log.Error("failed to rollback transaction", zap.Error(err))
+		}
+	}(tx)
+
+	for _, metric := range metrics {
+		switch metric.MType {
+		case models.TypeGauge:
+			_, err = tx.ExecContext(ctx, `INSERT INTO metrics (id, type, value) VALUES ($1, 'gauge', $2)
+				ON CONFLICT (id, type) DO UPDATE SET value = $2`, metric.ID, metric.Value)
+			if err != nil {
+				return err
+			}
+		case models.TypeCounter:
+			_, err = tx.ExecContext(ctx, `INSERT INTO metrics (id, type, value) VALUES ($1, 'counter', $2)
+				ON CONFLICT (id, type) DO UPDATE SET value = metrics.value + excluded.value`, metric.ID, metric.Delta)
+			if err != nil {
+				return err
+			}
+		default:
+			return storage.ErrWrongType
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (st *PGStorage) Save(ctx context.Context) error {
 	return nil
 }

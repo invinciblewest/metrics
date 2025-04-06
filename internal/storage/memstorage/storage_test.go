@@ -120,3 +120,53 @@ func TestMemStorage_Counter(t *testing.T) {
 		}
 	})
 }
+
+func TestMemStorage_UpdateBatch(t *testing.T) {
+	tests := []struct {
+		name        string
+		metrics     []models.Metric
+		expectError bool
+	}{
+		{
+			name: "success",
+			metrics: []models.Metric{
+				{
+					ID:    "test1",
+					MType: models.TypeGauge,
+					Value: new(float64),
+				},
+				{
+					ID:    "test2",
+					MType: models.TypeCounter,
+					Delta: new(int64),
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "error",
+			metrics: []models.Metric{
+				{
+					ID:    "test1",
+					MType: "unknown",
+					Value: new(float64),
+				},
+			},
+			expectError: true,
+		},
+	}
+
+	ctx := context.TODO()
+	st := NewMemStorage("", false)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := st.UpdateBatch(ctx, test.metrics)
+			if test.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

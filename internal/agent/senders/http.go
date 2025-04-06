@@ -43,15 +43,15 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 	}
 }
 
-func (s *HTTPSender) SendMetric(ctx context.Context, metric models.Metric) error {
-	path, err := url.JoinPath(s.serverAddr, "update")
+func (s *HTTPSender) SendMetric(ctx context.Context, metrics []models.Metric) error {
+	path, err := url.JoinPath(s.serverAddr, "updates")
 	if err != nil {
 		return err
 	}
 
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
-	if err = json.NewEncoder(gz).Encode(metric); err != nil {
+	if err = json.NewEncoder(gz).Encode(metrics); err != nil {
 		return err
 	}
 	if err = gz.Close(); err != nil {

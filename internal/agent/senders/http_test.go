@@ -21,12 +21,12 @@ func TestHTTPSender_Send(t *testing.T) {
 	ctx := context.TODO()
 	t.Run("error create request", func(t *testing.T) {
 		s := createSender("https://%123:8080")
-		err := s.SendMetric(ctx, createMetric())
+		err := s.SendMetric(ctx, createMetrics())
 		assert.Error(t, err)
 	})
 	t.Run("error send", func(t *testing.T) {
 		s := createSender("http://localhost:8080")
-		err := s.SendMetric(ctx, createMetric())
+		err := s.SendMetric(ctx, createMetrics())
 		assert.Error(t, err)
 	})
 	t.Run("success", func(t *testing.T) {
@@ -40,17 +40,19 @@ func TestHTTPSender_Send(t *testing.T) {
 		)
 		defer srv.Close()
 		s := createSender(srv.URL)
-		err := s.SendMetric(ctx, createMetric())
+		err := s.SendMetric(ctx, createMetrics())
 		assert.NoError(t, err)
 	})
 }
 
-func createMetric() models.Metric {
+func createMetrics() []models.Metric {
 	value := 3.14
-	return models.Metric{
-		ID:    "test",
-		MType: models.TypeGauge,
-		Value: &value,
+	return []models.Metric{
+		{
+			ID:    "test",
+			MType: models.TypeGauge,
+			Value: &value,
+		},
 	}
 }
 
