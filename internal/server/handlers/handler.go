@@ -191,6 +191,7 @@ func (h *Handler) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, storage.ErrNotFound) || errors.Is(err, storage.ErrWrongType) {
 			w.WriteHeader(http.StatusNotFound)
 		} else {
+			logger.Log.Error("failed to get metric", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
