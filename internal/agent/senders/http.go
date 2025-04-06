@@ -28,11 +28,24 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 	restyClient.
 		SetRetryCount(3).
 		SetRetryWaitTime(1 * time.Second).
+		SetRetryMaxWaitTime(5 * time.Second).
 		AddRetryCondition(
 			func(r *resty.Response, err error) bool {
 				return err != nil || r.StatusCode() >= http.StatusInternalServerError
 			},
 		).
+		SetRetryAfter(func(client *resty.Client, response *resty.Response) (time.Duration, error) {
+			switch response.Request.Attempt {
+			case 1:
+				return 1 * time.Second, nil
+			case 2:
+				return 3 * time.Second, nil
+			case 3:
+				return 5 * time.Second, nil
+			default:
+				return 0, nil
+			}
+		}).
 		AddRetryHook(func(r *resty.Response, err error) {
 			logger.Log.Info("retrying request...")
 		})
