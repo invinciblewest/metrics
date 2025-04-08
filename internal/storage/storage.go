@@ -25,5 +25,5 @@ type Storage interface {
 	Save(ctx context.Context) error
 	Load(ctx context.Context) error
 	Ping(ctx context.Context) error
-	Close(ctx context.Context)
+	Close(ctx context.Context) error
 }

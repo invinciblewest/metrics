@@ -128,7 +128,7 @@ func (h *Handler) UpdateMetricsBatch(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.service.UpdateBatch(ctx, metrics); err != nil {
 		logger.Log.Error("failed to update batch", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

@@ -42,22 +42,17 @@ func main() {
 			logger.Log.Fatal("failed to connect to database", zap.Error(err))
 		}
 
-		_, err = db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS metrics (
-			id TEXT NOT NULL,
-			type TEXT NOT NULL,
-			value DOUBLE PRECISION
-		);`)
-		if err != nil {
-			logger.Log.Fatal("failed to create table", zap.Error(err))
-		}
-
-		_, err = db.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS unique_id_type ON metrics (id, type);`)
-		if err != nil {
-			logger.Log.Fatal("failed to create index", zap.Error(err))
+		if err = pgstorage.InstallSchema(db); err != nil {
+			logger.Log.Fatal("failed to install schema", zap.Error(err))
 		}
 
 		st = pgstorage.NewPGStorage(db)
-		defer st.Close(ctx)
+		defer func(st storage.Storage, ctx context.Context) {
+			err := st.Close(ctx)
+			if err != nil {
+				logger.Log.Fatal("failed to close storage", zap.Error(err))
+			}
+		}(st, ctx)
 	} else {
 		logger.Log.Info("using in-memory storage")
 		syncSave := cfg.StoreInterval == 0

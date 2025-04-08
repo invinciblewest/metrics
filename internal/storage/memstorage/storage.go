@@ -183,8 +183,8 @@ func (st *MemStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (st *MemStorage) Close(ctx context.Context) {
-
+func (st *MemStorage) Close(ctx context.Context) error {
+	return nil
 }
 
 func closeFile(file *os.File) {
