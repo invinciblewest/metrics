@@ -61,7 +61,7 @@ func (ms *MetricsService) Get(ctx context.Context, mType, id string) (models.Met
 	case models.TypeCounter:
 		value, err := ms.st.GetCounter(ctx, id)
 		if err != nil {
-			return result, err
+			return result, storage.ErrNotFound
 		}
 		result = value
 	default:
