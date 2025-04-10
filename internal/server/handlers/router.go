@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func GetRouter(handler *Handler) http.Handler {
+func GetRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(logger.Middleware())
@@ -20,10 +20,13 @@ func GetRouter(handler *Handler) http.Handler {
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte("<html><body><h1>Metrics</h1></body></html>"))
 		if err != nil {
-			logger.Log.Info("main page error", zap.Error(err))
+			logger.Log.Error("main page error", zap.Error(err))
 		}
 	})
 
+	r.Route("/updates", func(r chi.Router) {
+		r.Post("/", handler.UpdateMetricsBatch)
+	})
 	r.Route("/update", func(r chi.Router) {
 		r.Post("/", handler.UpdateMetricJSON)
 		r.Post("/{type}/{name}/{value}", handler.UpdateMetric)
@@ -32,6 +35,7 @@ func GetRouter(handler *Handler) http.Handler {
 		r.Post("/", handler.GetMetricJSON)
 		r.Get("/{type}/{name}", handler.GetMetric)
 	})
+	r.Get("/ping", handler.PingStorage)
 
 	return r
 }

@@ -2,11 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/server/config"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
 	"github.com/invinciblewest/metrics/internal/server/services"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
+	"github.com/invinciblewest/metrics/internal/storage/pgstorage"
+	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -16,24 +21,51 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal("failed to get config", zap.Error(err))
 	}
 	err = logger.Initialize(cfg.LogLevel)
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal("failed to initialize logger", zap.Error(err))
 	}
-	syncSave := cfg.StoreInterval == 0
-	st := storage.NewMemStorage(cfg.FileStoragePath, syncSave)
 
-	if cfg.Restore {
-		if err = st.Load(); err != nil {
-			log.Fatal(err)
+	var st storage.Storage
+
+	if cfg.DatabaseDSN != "" {
+		logger.Log.Info("using PostgreSQL storage")
+
+		db, err := sql.Open("postgres", cfg.DatabaseDSN)
+		if err != nil {
+			logger.Log.Fatal("failed to connect to database", zap.Error(err))
+		}
+
+		if err = pgstorage.InstallSchema(db); err != nil {
+			logger.Log.Fatal("failed to install schema", zap.Error(err))
+		}
+
+		st = pgstorage.NewPGStorage(db)
+		defer func(st storage.Storage, ctx context.Context) {
+			err := st.Close(ctx)
+			if err != nil {
+				logger.Log.Fatal("failed to close storage", zap.Error(err))
+			}
+		}(st, ctx)
+	} else {
+		logger.Log.Info("using in-memory storage")
+		syncSave := cfg.StoreInterval == 0
+		st = memstorage.NewMemStorage(cfg.FileStoragePath, syncSave)
+
+		if cfg.Restore {
+			if err = st.Load(ctx); err != nil {
+				logger.Log.Error("failed to load metrics from file", zap.Error(err))
+			}
 		}
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	if cfg.StoreInterval > 0 {
@@ -44,12 +76,12 @@ func main() {
 			for {
 				select {
 				case <-ctx.Done():
-					if err = st.Save(); err != nil {
+					if err = st.Save(ctx); err != nil {
 						log.Fatal(err)
 					}
 					return
 				case <-ticker.C:
-					if err = st.Save(); err != nil {
+					if err = st.Save(ctx); err != nil {
 						log.Fatal(err)
 					}
 				}
@@ -57,13 +89,10 @@ func main() {
 		}()
 	}
 
-	router := handlers.GetRouter(
-		handlers.NewHandler(
-			services.NewMetricsService(st),
-		),
-	)
+	handler := handlers.NewHandler(services.NewMetricsService(st))
+	router := handlers.GetRouter(handler)
 
-	if err := run(ctx, cfg.Address, router); err != nil {
+	if err := run(ctx, cfg.Address, router); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Log.Fatal("server error", zap.Error(err))
 	}
 }

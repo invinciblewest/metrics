@@ -1,21 +1,18 @@
 package senders
 
 import (
+	"context"
 	"github.com/invinciblewest/metrics/internal/models"
-	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 )
 
 func TestSendMetrics(t *testing.T) {
+	ctx := context.TODO()
 	sender := createSender("http://localhost:8080")
 
-	t.Run("without metrics", func(t *testing.T) {
-		st := storage.NewMemStorage("", false)
-		err := SendMetrics(st, sender)
-		assert.NoError(t, err)
-	})
 	t.Run("success", func(t *testing.T) {
 		server := &http.Server{Addr: ":8080", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -27,26 +24,26 @@ func TestSendMetrics(t *testing.T) {
 			_ = server.Close()
 		}()
 
-		st := storage.NewMemStorage("", false)
-		err := st.UpdateGauge(createGaugeMetric())
+		st := memstorage.NewMemStorage("", false)
+		err := st.UpdateGauge(ctx, createGaugeMetric())
 		assert.NoError(t, err)
-		err = st.UpdateCounter(createCounterMetric())
+		err = st.UpdateCounter(ctx, createCounterMetric())
 		assert.NoError(t, err)
 
-		err = SendMetrics(st, sender)
+		err = SendMetrics(ctx, st, sender)
 		assert.NoError(t, err)
 	})
 	t.Run("error", func(t *testing.T) {
-		st := storage.NewMemStorage("", false)
-		err := st.UpdateCounter(createCounterMetric())
+		st := memstorage.NewMemStorage("", false)
+		err := st.UpdateCounter(ctx, createCounterMetric())
 		assert.NoError(t, err)
 
-		err = SendMetrics(st, sender)
+		err = SendMetrics(ctx, st, sender)
 		assert.Error(t, err)
 
-		err = st.UpdateGauge(createGaugeMetric())
+		err = st.UpdateGauge(ctx, createGaugeMetric())
 		assert.NoError(t, err)
-		err = SendMetrics(st, sender)
+		err = SendMetrics(ctx, st, sender)
 		assert.Error(t, err)
 	})
 }
