@@ -29,7 +29,7 @@ func main() {
 
 	addr := "http://" + cfg.Address
 	sendersList := []senders.Sender{
-		senders.NewHTTPSender(addr, http.DefaultClient),
+		senders.NewHTTPSender(addr, cfg.HashKey, http.DefaultClient),
 	}
 
 	agentApp := agent.NewAgent(st, collectorsList, sendersList, cfg.PollInterval, cfg.ReportInterval)

@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"github.com/go-resty/resty/v2"
@@ -17,9 +20,10 @@ import (
 type HTTPSender struct {
 	serverAddr string
 	client     *resty.Client
+	hashKey    string
 }
 
-func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
+func NewHTTPSender(serverAddr string, hashKey string, client *http.Client) *HTTPSender {
 	restyClient := resty.New()
 	if client != nil {
 		restyClient.SetTransport(client.Transport)
@@ -50,6 +54,7 @@ func NewHTTPSender(serverAddr string, client *http.Client) *HTTPSender {
 	return &HTTPSender{
 		serverAddr: serverAddr,
 		client:     restyClient,
+		hashKey:    hashKey,
 	}
 }
 
@@ -68,13 +73,20 @@ func (s *HTTPSender) SendMetric(ctx context.Context, metrics []models.Metric) er
 		return err
 	}
 
-	resp, err := s.client.R().
+	req := s.client.R().
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
 		SetHeader("Content-Type", "application/json").
 		SetBody(buf.Bytes()).
-		SetContext(ctx).
-		Post(path)
+		SetContext(ctx)
+
+	if s.hashKey != "" {
+		hash := hmac.New(sha256.New, []byte(s.hashKey))
+		hash.Write(buf.Bytes())
+		req.SetHeader("HashSHA256", base64.StdEncoding.EncodeToString(hash.Sum(nil)))
+	}
+
+	resp, err := req.Post(path)
 
 	if err != nil {
 		return err

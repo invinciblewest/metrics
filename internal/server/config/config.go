@@ -12,6 +12,7 @@ type Config struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         bool   `env:"RESTORE"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
+	HashKey         string `env:"KEY"`
 }
 
 func GetConfig() (Config, error) {
@@ -23,6 +24,7 @@ func GetConfig() (Config, error) {
 	flag.StringVar(&config.FileStoragePath, "f", "./storage.json", "storage path")
 	flag.BoolVar(&config.Restore, "r", true, "restore")
 	flag.StringVar(&config.DatabaseDSN, "d", "", "database dsn")
+	flag.StringVar(&config.HashKey, "k", "", "hash key")
 	flag.Parse()
 
 	if err := env.Parse(&config); err != nil {
