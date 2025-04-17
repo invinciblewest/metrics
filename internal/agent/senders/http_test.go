@@ -36,6 +36,7 @@ func TestHTTPSender_Send(t *testing.T) {
 				handlers.NewHandler(
 					services.NewMetricsService(st),
 				),
+				"",
 			),
 		)
 		defer srv.Close()
@@ -57,5 +58,5 @@ func createMetrics() []models.Metric {
 }
 
 func createSender(addr string) *HTTPSender {
-	return NewHTTPSender(addr, http.DefaultClient)
+	return NewHTTPSender(addr, "", http.DefaultClient)
 }

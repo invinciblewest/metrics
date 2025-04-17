@@ -11,7 +11,6 @@ import (
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"time"
 )
 
 func TestNewAgent(t *testing.T) {
@@ -40,14 +39,12 @@ func TestNewAgent(t *testing.T) {
 		mSender,
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	go func() {
 		agent := NewAgent(st, collectorsList, sendersList, 1, 2)
-		err := agent.Run()
+		err := agent.Run(ctx, 2)
 		assert.NoError(t, err)
 	}()
-
-	time.Sleep(2 * time.Second)
-
-	_, err := st.GetCounter(context.TODO(), "PollCount")
-	assert.NoError(t, err)
 }

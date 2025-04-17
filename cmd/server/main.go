@@ -90,7 +90,7 @@ func main() {
 	}
 
 	handler := handlers.NewHandler(services.NewMetricsService(st))
-	router := handlers.GetRouter(handler)
+	router := handlers.GetRouter(handler, cfg.HashKey)
 
 	if err := run(ctx, cfg.Address, router); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Log.Fatal("server error", zap.Error(err))

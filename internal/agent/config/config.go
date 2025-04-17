@@ -10,6 +10,8 @@ type Config struct {
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	LogLevel       string `env:"LOG_LEVEL"`
+	HashKey        string `env:"KEY"`
+	RateLimit      int    `env:"RATE_LIMIT"`
 }
 
 func GetConfig() (Config, error) {
@@ -19,6 +21,8 @@ func GetConfig() (Config, error) {
 	flag.IntVar(&config.PollInterval, "p", 2, "poll interval (sec)")
 	flag.IntVar(&config.ReportInterval, "r", 10, "report interval (sec)")
 	flag.StringVar(&config.LogLevel, "l", "info", "log level")
+	flag.StringVar(&config.HashKey, "k", "", "hash key")
+	flag.IntVar(&config.RateLimit, "L", 2, "rate limit")
 	flag.Parse()
 
 	if err := env.Parse(&config); err != nil {

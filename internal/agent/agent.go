@@ -4,7 +4,10 @@ import (
 	"context"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/senders"
+	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/pkg/worker"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -32,22 +35,38 @@ func NewAgent(
 	}
 }
 
-func (a *Agent) Run() error {
-	ctx := context.Background()
-	for {
-		if err := collectors.CollectMetrics(ctx, a.collectors...); err != nil {
-			return err
-		}
+func (a *Agent) Run(ctx context.Context, rateLimit int) error {
+	pollTicker := time.NewTicker(time.Duration(a.pInterval) * time.Second)
+	defer pollTicker.Stop()
 
-		pc, err := a.st.GetCounter(ctx, "PollCount")
-		if err != nil {
-			return err
-		}
-		if ((int(*pc.Delta) * a.pInterval) % a.rInterval) == 0 {
-			if err := senders.SendMetrics(ctx, a.st, a.senders...); err != nil {
-				return err
+	reportTicker := time.NewTicker(time.Duration(a.rInterval) * time.Second)
+	defer reportTicker.Stop()
+
+	workersPool := worker.NewPool()
+	defer workersPool.Stop()
+
+	errorsCh := workersPool.Start(ctx, rateLimit)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Log.Info("context done")
+				return
+			case <-pollTicker.C:
+				collectors.CollectMetrics(workersPool, a.collectors...)
+			case <-reportTicker.C:
+				senders.SendMetrics(workersPool, a.st, a.senders...)
 			}
 		}
-		time.Sleep(time.Duration(a.pInterval) * time.Second)
+	}()
+
+	for err := range errorsCh {
+		if err != nil {
+			logger.Log.Error("worker error", zap.Error(err))
+			return err
+		}
 	}
+
+	return nil
 }

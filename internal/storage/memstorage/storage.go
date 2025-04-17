@@ -60,7 +60,12 @@ func (st *MemStorage) GetGaugeList(ctx context.Context) storage.GaugeList {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
-	return st.Gauges
+	gauges := make(storage.GaugeList, len(st.Gauges))
+	for k, v := range st.Gauges {
+		gauges[k] = v
+	}
+
+	return gauges
 }
 
 func (st *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) error {
@@ -100,7 +105,12 @@ func (st *MemStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
-	return st.Counters
+	counters := make(storage.CounterList, len(st.Counters))
+	for k, v := range st.Counters {
+		counters[k] = v
+	}
+
+	return counters
 }
 
 func (st *MemStorage) UpdateBatch(ctx context.Context, metrics []models.Metric) error {
