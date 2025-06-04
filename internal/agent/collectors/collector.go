@@ -1,16 +1,18 @@
 package collectors
 
-import "context"
+import (
+	"context"
+	"github.com/invinciblewest/metrics/pkg/worker"
+)
 
 type Collector interface {
 	Collect(ctx context.Context) error
 }
 
-func CollectMetrics(ctx context.Context, collectors ...Collector) error {
+func CollectMetrics(workersPool *worker.Pool, collectors ...Collector) {
 	for _, c := range collectors {
-		if err := c.Collect(ctx); err != nil {
-			return err
-		}
+		workersPool.AddJob(func(ctx context.Context) error {
+			return c.Collect(ctx)
+		})
 	}
-	return nil
 }

@@ -8,11 +8,12 @@ import (
 	"net/http"
 )
 
-func GetRouter(handler *Handler) *chi.Mux {
+func GetRouter(handler *Handler, hashKey string) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(logger.Middleware())
 	r.Use(middleware.Recoverer)
+	r.Use(hashMiddleware(hashKey))
 	r.Use(gzipMiddleware())
 
 	r.Get("/", func(w http.ResponseWriter, req *http.Request) {

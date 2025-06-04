@@ -5,6 +5,7 @@ import (
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
+	"github.com/invinciblewest/metrics/pkg/worker"
 	"go.uber.org/zap"
 )
 
@@ -12,22 +13,26 @@ type Sender interface {
 	SendMetric(ctx context.Context, metrics []models.Metric) error
 }
 
-func SendMetrics(ctx context.Context, st storage.Storage, senders ...Sender) error {
-	logger.Log.Info("sending metrics to server...")
+func SendMetrics(workersPool *worker.Pool, st storage.Storage, senders ...Sender) {
 	for _, s := range senders {
-		metrics := make([]models.Metric, 0)
-		for _, v := range st.GetGaugeList(ctx) {
-			metrics = append(metrics, v)
-		}
-		for _, v := range st.GetCounterList(ctx) {
-			metrics = append(metrics, v)
-		}
-		err := s.SendMetric(ctx, metrics)
-		if err != nil {
-			logger.Log.Error("failed to send metrics: ", zap.Error(err))
-			return err
-		}
+		workersPool.AddJob(func(ctx context.Context) error {
+			logger.Log.Info("sending metrics to server...")
+
+			metrics := make([]models.Metric, 0)
+			for _, v := range st.GetGaugeList(ctx) {
+				metrics = append(metrics, v)
+			}
+			for _, v := range st.GetCounterList(ctx) {
+				metrics = append(metrics, v)
+			}
+			err := s.SendMetric(ctx, metrics)
+			if err != nil {
+				logger.Log.Error("failed to send metrics: ", zap.Error(err))
+				return err
+			}
+
+			logger.Log.Info("metrics have been sent")
+			return nil
+		})
 	}
-	logger.Log.Info("metrics have been sent")
-	return nil
 }
