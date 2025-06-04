@@ -23,11 +23,6 @@ func NewPool() *Pool {
 func (p *Pool) Start(ctx context.Context, rateLimit int) chan error {
 	errorCh := make(chan error)
 
-	go func() {
-		p.wg.Wait()
-		close(errorCh)
-	}()
-
 	for i := 0; i < rateLimit; i++ {
 		p.wg.Add(1)
 		go func() {
@@ -47,6 +42,11 @@ func (p *Pool) Start(ctx context.Context, rateLimit int) chan error {
 			}
 		}()
 	}
+
+	go func() {
+		p.wg.Wait()
+		close(errorCh)
+	}()
 
 	return errorCh
 }
