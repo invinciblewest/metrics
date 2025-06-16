@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os/signal"
 	"syscall"
 )
@@ -23,6 +24,12 @@ func main() {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if cfg.Pprof {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
 	}
 
 	err = logger.Initialize(cfg.LogLevel)
