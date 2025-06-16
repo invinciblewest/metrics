@@ -4,6 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
+	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/server/config"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
@@ -13,11 +19,6 @@ import (
 	"github.com/invinciblewest/metrics/internal/storage/pgstorage"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
-	"log"
-	"net/http"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func main() {

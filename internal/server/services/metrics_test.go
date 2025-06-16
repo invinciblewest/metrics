@@ -3,10 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewMetricsService(t *testing.T) {

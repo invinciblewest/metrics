@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+
 	"github.com/invinciblewest/metrics/internal/models"
 )
 

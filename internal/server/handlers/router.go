@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 func GetRouter(handler *Handler, hashKey string) *chi.Mux {

@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/invinciblewest/metrics/internal/storage/memstorage"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/invinciblewest/metrics/internal/storage/memstorage"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetRouter(t *testing.T) {

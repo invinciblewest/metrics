@@ -3,6 +3,7 @@ package collectors
 import (
 	"context"
 	"fmt"
+
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"

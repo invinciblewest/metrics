@@ -2,13 +2,14 @@ package collectors
 
 import (
 	"context"
+	"math/rand"
+	"reflect"
+	"runtime"
+
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"go.uber.org/zap"
-	"math/rand"
-	"reflect"
-	"runtime"
 )
 
 type RuntimeCollector struct {

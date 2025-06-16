@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/collectors/mocks"
@@ -10,7 +12,6 @@ import (
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewAgent(t *testing.T) {

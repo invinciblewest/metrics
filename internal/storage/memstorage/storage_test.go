@@ -2,10 +2,11 @@ package memstorage
 
 import (
 	"context"
+	"testing"
+
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewMemStorage(t *testing.T) {

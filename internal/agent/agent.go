@@ -2,13 +2,14 @@ package agent
 
 import (
 	"context"
+	"time"
+
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/senders"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"github.com/invinciblewest/metrics/pkg/worker"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Agent struct {

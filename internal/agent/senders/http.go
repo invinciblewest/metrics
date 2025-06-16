@@ -9,15 +9,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/go-resty/resty/v2"
-	"github.com/invinciblewest/metrics/internal/logger"
-	"github.com/invinciblewest/metrics/internal/models"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/invinciblewest/metrics/internal/logger"
+	"github.com/invinciblewest/metrics/internal/models"
+	"go.uber.org/zap"
 )
 
 type HTTPSender struct {

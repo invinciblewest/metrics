@@ -3,6 +3,12 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"os/signal"
+	"syscall"
+
 	"github.com/invinciblewest/metrics/internal/agent"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/config"
@@ -10,11 +16,6 @@ import (
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"go.uber.org/zap"
-	"log"
-	"net/http"
-	_ "net/http/pprof"
-	"os/signal"
-	"syscall"
 )
 
 func main() {

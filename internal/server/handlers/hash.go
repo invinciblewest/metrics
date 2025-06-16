@@ -5,11 +5,12 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/invinciblewest/metrics/internal/logger"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/invinciblewest/metrics/internal/logger"
+	"go.uber.org/zap"
 )
 
 type responseRecorder struct {
