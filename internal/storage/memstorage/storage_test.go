@@ -170,3 +170,129 @@ func TestMemStorage_UpdateBatch(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkMemStorage_UpdateGauge(b *testing.B) {
+	st := NewMemStorage("", false)
+	ctx := context.Background()
+	value := 42.0
+	metric := models.Metric{
+		ID:    "benchmark_gauge",
+		MType: models.TypeGauge,
+		Value: &value,
+	}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = st.UpdateGauge(ctx, metric)
+	}
+}
+
+func BenchmarkMemStorage_GetGauge(b *testing.B) {
+	st := NewMemStorage("", false)
+	ctx := context.Background()
+	value := 42.0
+	metric := models.Metric{
+		ID:    "benchmark_gauge",
+		MType: models.TypeGauge,
+		Value: &value,
+	}
+	_ = st.UpdateGauge(ctx, metric)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = st.GetGauge(ctx, "benchmark_gauge")
+	}
+}
+
+func BenchmarkMemStorage_GetGaugeList(b *testing.B) {
+	st := NewMemStorage("", false)
+	ctx := context.Background()
+	value := 42.0
+	metric := models.Metric{
+		ID:    "benchmark_gauge",
+		MType: models.TypeGauge,
+		Value: &value,
+	}
+	_ = st.UpdateGauge(ctx, metric)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = st.GetGaugeList(ctx)
+	}
+}
+
+func BenchmarkMemStorage_UpdateCounter(b *testing.B) {
+	st := NewMemStorage("", false)
+	ctx := context.Background()
+	delta := int64(1)
+	metric := models.Metric{
+		ID:    "benchmark_counter",
+		MType: models.TypeCounter,
+		Delta: &delta,
+	}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = st.UpdateCounter(ctx, metric)
+	}
+}
+
+func BenchmarkMemStorage_GetCounter(b *testing.B) {
+	st := NewMemStorage("", false)
+	ctx := context.Background()
+	delta := int64(1)
+	metric := models.Metric{
+		ID:    "benchmark_counter",
+		MType: models.TypeCounter,
+		Delta: &delta,
+	}
+	_ = st.UpdateCounter(ctx, metric)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = st.GetCounter(ctx, "benchmark_counter")
+	}
+}
+
+func BenchmarkMemStorage_GetCounterList(b *testing.B) {
+	st := NewMemStorage("", false)
+	ctx := context.Background()
+	delta := int64(1)
+	metric := models.Metric{
+		ID:    "benchmark_counter",
+		MType: models.TypeCounter,
+		Delta: &delta,
+	}
+	_ = st.UpdateCounter(ctx, metric)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = st.GetCounterList(ctx)
+	}
+}
+
+func BenchmarkMemStorage_UpdateBatch(b *testing.B) {
+	st := NewMemStorage("", false)
+	ctx := context.Background()
+	metrics := []models.Metric{
+		{
+			ID:    "benchmark_gauge",
+			MType: models.TypeGauge,
+			Value: new(float64),
+		},
+		{
+			ID:    "benchmark_counter",
+			MType: models.TypeCounter,
+			Delta: new(int64),
+		},
+	}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = st.UpdateBatch(ctx, metrics)
+	}
+}
