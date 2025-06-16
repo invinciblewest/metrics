@@ -15,16 +15,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// PGStorage представляет собой хранилище метрик в PostgreSQL.
 type PGStorage struct {
 	db *sql.DB
 }
 
+// NewPGStorage создает новый экземпляр PGStorage с заданным подключением к базе данных.
 func NewPGStorage(db *sql.DB) *PGStorage {
 	return &PGStorage{
 		db: db,
 	}
 }
 
+// isRetriableError проверяет, является ли ошибка временной и может быть повторена.
 func isRetriableError(err error) bool {
 	if err == nil {
 		return false
@@ -39,6 +42,7 @@ func isRetriableError(err error) bool {
 	return false
 }
 
+// withRetries выполняет функцию с повторными попытками в случае временных ошибок.
 func withRetries(ctx context.Context, fn func() error) error {
 	retryDelays := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
 
@@ -61,6 +65,7 @@ func withRetries(ctx context.Context, fn func() error) error {
 	)
 }
 
+// UpdateGauge обновляет метрику типа Gauge в хранилище.
 func (st *PGStorage) UpdateGauge(ctx context.Context, metric models.Metric) error {
 	return withRetries(ctx, func() error {
 		_, err := st.db.ExecContext(ctx, `INSERT INTO metrics (id, type, value) VALUES ($1, 'gauge', $2)
@@ -69,6 +74,7 @@ func (st *PGStorage) UpdateGauge(ctx context.Context, metric models.Metric) erro
 	})
 }
 
+// GetGauge извлекает метрику типа Gauge из хранилища по идентификатору.
 func (st *PGStorage) GetGauge(ctx context.Context, id string) (models.Metric, error) {
 	var metric models.Metric
 	err := withRetries(ctx, func() error {
@@ -84,6 +90,7 @@ func (st *PGStorage) GetGauge(ctx context.Context, id string) (models.Metric, er
 	return metric, nil
 }
 
+// GetGaugeList возвращает список всех метрик типа Gauge в хранилище.
 func (st *PGStorage) GetGaugeList(ctx context.Context) storage.GaugeList {
 	var gauges storage.GaugeList
 	err := withRetries(ctx, func() error {
@@ -111,6 +118,7 @@ func (st *PGStorage) GetGaugeList(ctx context.Context) storage.GaugeList {
 	return gauges
 }
 
+// UpdateCounter обновляет метрику типа Counter в хранилище.
 func (st *PGStorage) UpdateCounter(ctx context.Context, metric models.Metric) error {
 	return withRetries(ctx, func() error {
 		_, err := st.db.ExecContext(ctx, `INSERT INTO metrics (id, type, value) VALUES ($1, 'counter', $2)
@@ -119,6 +127,7 @@ func (st *PGStorage) UpdateCounter(ctx context.Context, metric models.Metric) er
 	})
 }
 
+// GetCounter извлекает метрику типа Counter из хранилища по идентификатору.
 func (st *PGStorage) GetCounter(ctx context.Context, id string) (models.Metric, error) {
 	var metric models.Metric
 	var value float64
@@ -137,6 +146,7 @@ func (st *PGStorage) GetCounter(ctx context.Context, id string) (models.Metric, 
 	return metric, nil
 }
 
+// GetCounterList возвращает список всех метрик типа Counter в хранилище.
 func (st *PGStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	var counters storage.CounterList
 	err := withRetries(ctx, func() error {
@@ -164,6 +174,7 @@ func (st *PGStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	return counters
 }
 
+// UpdateBatch обновляет пакет метрик в хранилище.
 func (st *PGStorage) UpdateBatch(ctx context.Context, metrics []models.Metric) error {
 	return withRetries(ctx, func() error {
 		tx, err := st.db.BeginTx(ctx, nil)
@@ -200,18 +211,24 @@ func (st *PGStorage) UpdateBatch(ctx context.Context, metrics []models.Metric) e
 	})
 }
 
+// Save сохраняет текущее состояние хранилища в постоянное хранилище.
+// В данном случае, сохранение в PostgreSQL не требуется, так как все изменения уже сохраняются в базе данных.
 func (st *PGStorage) Save(ctx context.Context) error {
 	return nil
 }
 
+// Load загружает состояние хранилища из постоянного хранилища.
+// В данном случае, загрузка из PostgreSQL не требуется, так как все данные уже находятся в базе данных.
 func (st *PGStorage) Load(ctx context.Context) error {
 	return nil
 }
 
+// Ping проверяет доступность хранилища, отправляя простой запрос к базе данных.
 func (st *PGStorage) Ping(ctx context.Context) error {
 	return st.db.Ping()
 }
 
+// Close закрывает соединение с хранилищем и освобождает ресурсы.
 func (st *PGStorage) Close(ctx context.Context) error {
 	return st.db.Close()
 }

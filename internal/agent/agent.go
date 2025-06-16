@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Agent представляет собой агента, который собирает и отправляет метрики на сервер.
 type Agent struct {
 	st         storage.Storage
 	collectors []collectors.Collector
@@ -20,6 +21,7 @@ type Agent struct {
 	rInterval  int
 }
 
+// NewAgent создает новый экземпляр агента с заданным хранилищем, коллекторами, отправителями и интервалами опроса и отчета.
 func NewAgent(
 	st storage.Storage,
 	collectors []collectors.Collector,
@@ -36,6 +38,7 @@ func NewAgent(
 	}
 }
 
+// Run запускает агента, который периодически собирает метрики и отправляет их на сервер.
 func (a *Agent) Run(ctx context.Context, rateLimit int) error {
 	pollTicker := time.NewTicker(time.Duration(a.pInterval) * time.Second)
 	defer pollTicker.Stop()

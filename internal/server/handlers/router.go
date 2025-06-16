@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// GetRouter создает и настраивает маршрутизатор Chi с заданным обработчиком.
 func GetRouter(handler *Handler, hashKey string) *chi.Mux {
 	r := chi.NewRouter()
 

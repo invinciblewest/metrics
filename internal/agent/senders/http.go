@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// HTTPSender отправляет метрики на сервер через HTTP с использованием RESTy клиента.
 type HTTPSender struct {
 	serverAddr string
 	client     *resty.Client
@@ -29,6 +30,7 @@ type HTTPSender struct {
 	bufPool    *sync.Pool
 }
 
+// NewHTTPSender создает новый экземпляр HTTPSender с заданным адресом сервера, ключом хеширования и HTTP клиентом.
 func NewHTTPSender(serverAddr string, hashKey string, client *http.Client) *HTTPSender {
 	restyClient := resty.New()
 	if client != nil {
@@ -74,6 +76,7 @@ func NewHTTPSender(serverAddr string, hashKey string, client *http.Client) *HTTP
 	}
 }
 
+// SendMetric отправляет список метрик на сервер в формате JSON, сжимаемом с помощью gzip.
 func (s *HTTPSender) SendMetric(ctx context.Context, metrics []models.Metric) error {
 	path, err := url.JoinPath(s.serverAddr, "updates")
 	if err != nil {

@@ -2,6 +2,7 @@ package pgstorage
 
 import "database/sql"
 
+// InstallSchema создает таблицу metrics в базе данных, если она не существует.
 func InstallSchema(db *sql.DB) error {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS metrics (

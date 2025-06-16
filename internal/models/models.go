@@ -1,13 +1,15 @@
 package models
 
+// Содержит определения структур и констант, используемых в приложении для работы с метриками.
 const (
-	TypeGauge   = "gauge"
-	TypeCounter = "counter"
+	TypeGauge   = "gauge"   // TypeGauge определяет тип метрики как показатель.
+	TypeCounter = "counter" // TypeCounter определяет тип метрики как счетчик.
 )
 
+// Metric представляет собой метрику, которая может быть либо счетчиком, либо показателем.
 type Metric struct {
-	ID    string   `json:"id"`
-	MType string   `json:"type"`
-	Delta *int64   `json:"delta,omitempty"`
-	Value *float64 `json:"value,omitempty"`
+	ID    string   `json:"id"`              // ID уникальный идентификатор метрики.
+	MType string   `json:"type"`            // MType определяет тип метрики (счетчик или показатель).
+	Delta *int64   `json:"delta,omitempty"` // Delta представляет собой значение счетчика, если метрика является счетчиком.
+	Value *float64 `json:"value,omitempty"` // Value представляет собой значение показателя, если метрика является показателем.
 }

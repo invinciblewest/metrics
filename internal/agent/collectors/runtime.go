@@ -12,16 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// RuntimeCollector собирает метрики о работе рантайма Go.
 type RuntimeCollector struct {
 	st storage.Storage
 }
 
+// NewRuntimeCollector создает новый экземпляр RuntimeCollector.
 func NewRuntimeCollector(st storage.Storage) *RuntimeCollector {
 	return &RuntimeCollector{
 		st: st,
 	}
 }
 
+// Collect собирает метрики о работе рантайма Go и сохраняет их в хранилище.
 func (c *RuntimeCollector) Collect(ctx context.Context) error {
 	logger.Log.Info("collecting metrics...",
 		zap.String("collector", "runtime"),
