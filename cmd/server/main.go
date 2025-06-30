@@ -38,7 +38,8 @@ func main() {
 	if cfg.DatabaseDSN != "" {
 		logger.Log.Info("using PostgreSQL storage")
 
-		db, err := sql.Open("postgres", cfg.DatabaseDSN)
+		var db *sql.DB
+		db, err = sql.Open("postgres", cfg.DatabaseDSN)
 		if err != nil {
 			logger.Log.Fatal("failed to connect to database", zap.Error(err))
 		}
@@ -49,7 +50,7 @@ func main() {
 
 		st = pgstorage.NewPGStorage(db)
 		defer func(st storage.Storage, ctx context.Context) {
-			err := st.Close(ctx)
+			err = st.Close(ctx)
 			if err != nil {
 				logger.Log.Fatal("failed to close storage", zap.Error(err))
 			}
@@ -93,7 +94,7 @@ func main() {
 	handler := handlers.NewHandler(services.NewMetricsService(st))
 	router := handlers.GetRouter(handler, cfg.HashKey)
 
-	if err := run(ctx, cfg.Address, router); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err = run(ctx, cfg.Address, router); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Log.Fatal("server error", zap.Error(err))
 	}
 }
