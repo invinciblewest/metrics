@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os/signal"
@@ -21,7 +22,17 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	BuildVersion string
+	BuildDate    string
+	BuildCommit  string
+)
+
 func main() {
+	fmt.Println("Build version:", checkValue(BuildVersion))
+	fmt.Println("Build date:   ", checkValue(BuildDate))
+	fmt.Println("Build commit: ", checkValue(BuildCommit))
+
 	ctx := context.Background()
 
 	cfg, err := config.GetConfig()
@@ -119,4 +130,11 @@ func run(ctx context.Context, addr string, handler http.Handler) error {
 
 	logger.Log.Info("server is starting", zap.String("address", addr))
 	return server.ListenAndServe()
+}
+
+func checkValue(val string) string {
+	if val == "" {
+		return "N/A"
+	}
+	return val
 }
