@@ -1,13 +1,15 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"go.uber.org/zap"
-	"net/http"
 )
 
+// GetRouter создает и настраивает маршрутизатор Chi с заданным обработчиком.
 func GetRouter(handler *Handler, hashKey string) *chi.Mux {
 	r := chi.NewRouter()
 

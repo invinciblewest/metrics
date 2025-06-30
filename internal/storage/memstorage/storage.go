@@ -4,14 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os"
+	"sync"
+
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"go.uber.org/zap"
-	"os"
-	"sync"
 )
 
+// MemStorage представляет собой хранилище метрик в памяти.
 type MemStorage struct {
 	Gauges   storage.GaugeList   `json:"gauges"`
 	Counters storage.CounterList `json:"counters"`
@@ -20,6 +22,7 @@ type MemStorage struct {
 	mu       sync.RWMutex
 }
 
+// NewMemStorage создает новый экземпляр MemStorage с заданным путем к файлу и флагом синхронного сохранения.
 func NewMemStorage(path string, syncSave bool) *MemStorage {
 	return &MemStorage{
 		Gauges:   make(storage.GaugeList),
@@ -29,6 +32,7 @@ func NewMemStorage(path string, syncSave bool) *MemStorage {
 	}
 }
 
+// UpdateGauge обновляет метрику типа Gauge в хранилище.
 func (st *MemStorage) UpdateGauge(ctx context.Context, metric models.Metric) error {
 	if metric.MType != models.TypeGauge {
 		return storage.ErrWrongType
@@ -44,6 +48,7 @@ func (st *MemStorage) UpdateGauge(ctx context.Context, metric models.Metric) err
 	return nil
 }
 
+// GetGauge извлекает метрику типа Gauge из хранилища по идентификатору.
 func (st *MemStorage) GetGauge(ctx context.Context, id string) (models.Metric, error) {
 	st.mu.Lock()
 	defer st.mu.Unlock()
@@ -56,6 +61,7 @@ func (st *MemStorage) GetGauge(ctx context.Context, id string) (models.Metric, e
 	}
 }
 
+// GetGaugeList возвращает список всех метрик типа Gauge в хранилище.
 func (st *MemStorage) GetGaugeList(ctx context.Context) storage.GaugeList {
 	st.mu.Lock()
 	defer st.mu.Unlock()
@@ -68,6 +74,7 @@ func (st *MemStorage) GetGaugeList(ctx context.Context) storage.GaugeList {
 	return gauges
 }
 
+// UpdateCounter обновляет метрику типа Counter в хранилище.
 func (st *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) error {
 	if metric.MType != models.TypeCounter {
 		return storage.ErrWrongType
@@ -89,6 +96,7 @@ func (st *MemStorage) UpdateCounter(ctx context.Context, metric models.Metric) e
 	return nil
 }
 
+// GetCounter извлекает метрику типа Counter из хранилища по идентификатору.
 func (st *MemStorage) GetCounter(ctx context.Context, id string) (models.Metric, error) {
 	st.mu.Lock()
 	defer st.mu.Unlock()
@@ -101,6 +109,7 @@ func (st *MemStorage) GetCounter(ctx context.Context, id string) (models.Metric,
 	}
 }
 
+// GetCounterList возвращает список всех метрик типа Counter в хранилище.
 func (st *MemStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	st.mu.Lock()
 	defer st.mu.Unlock()
@@ -113,6 +122,7 @@ func (st *MemStorage) GetCounterList(ctx context.Context) storage.CounterList {
 	return counters
 }
 
+// UpdateBatch обновляет пакет метрик в хранилище.
 func (st *MemStorage) UpdateBatch(ctx context.Context, metrics []models.Metric) error {
 	st.mu.Lock()
 	defer st.mu.Unlock()
@@ -135,6 +145,7 @@ func (st *MemStorage) UpdateBatch(ctx context.Context, metrics []models.Metric) 
 	return nil
 }
 
+// Save сохраняет текущее состояние хранилища в файл, если путь к файлу задан.
 func (st *MemStorage) Save(ctx context.Context) error {
 	if st.path == "" {
 		return nil
@@ -161,6 +172,7 @@ func (st *MemStorage) Save(ctx context.Context) error {
 	return nil
 }
 
+// Load загружает состояние хранилища из файла, если путь к файлу задан.
 func (st *MemStorage) Load(ctx context.Context) error {
 	if st.path == "" {
 		return nil
@@ -189,14 +201,17 @@ func (st *MemStorage) Load(ctx context.Context) error {
 	return nil
 }
 
+// Ping проверяет доступность хранилища. В случае MemStorage всегда возвращает nil.
 func (st *MemStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
+// Close закрывает хранилище. В случае MemStorage ничего не делает, так как оно не использует внешние ресурсы.
 func (st *MemStorage) Close(ctx context.Context) error {
 	return nil
 }
 
+// closeFile закрывает файл и логирует ошибку, если она произошла.
 func closeFile(file *os.File) {
 	err := file.Close()
 	if err != nil {

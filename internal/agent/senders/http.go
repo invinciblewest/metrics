@@ -9,20 +9,28 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/url"
+	"sync"
+	"time"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
-	"net/http"
-	"net/url"
-	"time"
+	"go.uber.org/zap"
 )
 
+// HTTPSender отправляет метрики на сервер через HTTP с использованием RESTy клиента.
 type HTTPSender struct {
 	serverAddr string
 	client     *resty.Client
 	hashKey    string
+	gzipPool   *sync.Pool
+	bufPool    *sync.Pool
 }
 
+// NewHTTPSender создает новый экземпляр HTTPSender с заданным адресом сервера, ключом хеширования и HTTP клиентом.
 func NewHTTPSender(serverAddr string, hashKey string, client *http.Client) *HTTPSender {
 	restyClient := resty.New()
 	if client != nil {
@@ -55,17 +63,39 @@ func NewHTTPSender(serverAddr string, hashKey string, client *http.Client) *HTTP
 		serverAddr: serverAddr,
 		client:     restyClient,
 		hashKey:    hashKey,
+		gzipPool: &sync.Pool{
+			New: func() interface{} {
+				return gzip.NewWriter(io.Discard)
+			},
+		},
+		bufPool: &sync.Pool{
+			New: func() interface{} {
+				return new(bytes.Buffer)
+			},
+		},
 	}
 }
 
+// SendMetric отправляет список метрик на сервер в формате JSON, сжимаемом с помощью gzip.
 func (s *HTTPSender) SendMetric(ctx context.Context, metrics []models.Metric) error {
 	path, err := url.JoinPath(s.serverAddr, "updates")
 	if err != nil {
 		return err
 	}
 
-	var buf bytes.Buffer
-	gz := gzip.NewWriter(&buf)
+	buf := s.bufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer s.bufPool.Put(buf)
+
+	gz := s.gzipPool.Get().(*gzip.Writer)
+	gz.Reset(buf)
+	defer func() {
+		if err = gz.Close(); err != nil {
+			logger.Log.Error("failed to close gzip writer", zap.Error(err))
+			s.gzipPool.Put(gz)
+		}
+	}()
+
 	if err = json.NewEncoder(gz).Encode(metrics); err != nil {
 		return err
 	}

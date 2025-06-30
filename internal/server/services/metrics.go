@@ -3,20 +3,24 @@ package services
 import (
 	"context"
 	"errors"
+
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
 )
 
+// MetricsService предоставляет методы для работы с метриками в хранилище.
 type MetricsService struct {
 	st storage.Storage
 }
 
+// NewMetricsService создает новый экземпляр MetricsService с заданным хранилищем.
 func NewMetricsService(st storage.Storage) MetricsService {
 	return MetricsService{
 		st: st,
 	}
 }
 
+// Update обновляет метрику в хранилище в зависимости от ее типа.
 func (ms *MetricsService) Update(ctx context.Context, metrics models.Metric) (models.Metric, error) {
 	switch metrics.MType {
 	case models.TypeGauge:
@@ -40,10 +44,12 @@ func (ms *MetricsService) Update(ctx context.Context, metrics models.Metric) (mo
 	return metrics, nil
 }
 
+// UpdateBatch обновляет пакет метрик в хранилище.
 func (ms *MetricsService) UpdateBatch(ctx context.Context, metrics []models.Metric) error {
 	return ms.st.UpdateBatch(ctx, metrics)
 }
 
+// Get извлекает метрику из хранилища по типу и идентификатору.
 func (ms *MetricsService) Get(ctx context.Context, mType, id string) (models.Metric, error) {
 	var result models.Metric
 
@@ -71,6 +77,7 @@ func (ms *MetricsService) Get(ctx context.Context, mType, id string) (models.Met
 	return result, nil
 }
 
+// PingStorage проверяет доступность хранилища метрик.
 func (ms *MetricsService) PingStorage(ctx context.Context) bool {
 	if err := ms.st.Ping(ctx); err != nil {
 		return false

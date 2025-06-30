@@ -6,13 +6,16 @@ import (
 	"sync"
 )
 
+// Job представляет собой функцию, которая принимает контекст и возвращает ошибку.
 type Job func(ctx context.Context) error
 
+// Pool представляет собой пул горутин, которые выполняют задачи (Job).
 type Pool struct {
 	jobCh chan Job
 	wg    sync.WaitGroup
 }
 
+// NewPool создает новый экземпляр Pool с каналом для задач и группой ожидания.
 func NewPool() *Pool {
 	return &Pool{
 		jobCh: make(chan Job, runtime.NumCPU()),
@@ -20,6 +23,8 @@ func NewPool() *Pool {
 	}
 }
 
+// Start запускает пул горутин.
+// Он принимает контекст для управления временем выполнения и ограничение по количеству горутин (rateLimit).
 func (p *Pool) Start(ctx context.Context, rateLimit int) chan error {
 	errorCh := make(chan error)
 
@@ -51,14 +56,17 @@ func (p *Pool) Start(ctx context.Context, rateLimit int) chan error {
 	return errorCh
 }
 
+// Wait блокирует выполнение до тех пор, пока все горутины в пуле не завершат свою работу.
 func (p *Pool) Wait() {
 	p.wg.Wait()
 }
 
+// AddJob добавляет новую задачу (Job) в пул для выполнения.
 func (p *Pool) AddJob(job Job) {
 	p.jobCh <- job
 }
 
+// Stop останавливает пул, закрывая канал задач.
 func (p *Pool) Stop() {
 	close(p.jobCh)
 }

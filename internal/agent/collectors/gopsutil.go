@@ -3,6 +3,7 @@ package collectors
 import (
 	"context"
 	"fmt"
+
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/storage"
@@ -11,16 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// GopsutilCollector собирает метрики с помощью библиотеки gopsutil.
 type GopsutilCollector struct {
 	st storage.Storage
 }
 
+// NewGopsutilCollector создает новый экземпляр GopsutilCollector с заданным хранилищем.
 func NewGopsutilCollector(st storage.Storage) *GopsutilCollector {
 	return &GopsutilCollector{
 		st: st,
 	}
 }
 
+// Collect собирает метрики о памяти и загрузке процессора и сохраняет их в хранилище.
 func (c *GopsutilCollector) Collect(ctx context.Context) error {
 	logger.Log.Info("collecting metrics...",
 		zap.String("collector", "gopsutil"),

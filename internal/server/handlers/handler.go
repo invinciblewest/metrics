@@ -4,26 +4,30 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"strconv"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
 	"github.com/invinciblewest/metrics/internal/server/services"
 	"github.com/invinciblewest/metrics/internal/storage"
 	"go.uber.org/zap"
-	"net/http"
-	"strconv"
 )
 
+// Handler представляет собой обработчик HTTP-запросов для работы с метриками.
 type Handler struct {
 	service services.MetricsService
 }
 
+// NewHandler создает новый экземпляр Handler с заданным сервисом метрик.
 func NewHandler(service services.MetricsService) *Handler {
 	return &Handler{
 		service: service,
 	}
 }
 
+// UpdateMetric обновляет метрику по типу и имени, полученным из URL-параметров.
 func (h *Handler) UpdateMetric(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -68,6 +72,7 @@ func (h *Handler) UpdateMetric(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// UpdateMetricJSON обновляет метрику, полученную в формате JSON из тела запроса.
 func (h *Handler) UpdateMetricJSON(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if r.Header.Get("Content-Type") != "application/json" {
@@ -107,6 +112,7 @@ func (h *Handler) UpdateMetricJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateMetricsBatch обновляет пакет метрик, полученных в формате JSON из тела запроса.
 func (h *Handler) UpdateMetricsBatch(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if r.Header.Get("Content-Type") != "application/json" {
@@ -135,6 +141,7 @@ func (h *Handler) UpdateMetricsBatch(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// GetMetric возвращает метрику по типу и имени, полученным из URL-параметров.
 func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	metricType := chi.URLParam(r, "type")
@@ -168,6 +175,7 @@ func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetMetricJSON возвращает метрику в формате JSON, полученную из тела запроса.
 func (h *Handler) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if r.Header.Get("Content-Type") != "application/json" {
@@ -211,6 +219,7 @@ func (h *Handler) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PingStorage проверяет доступность хранилища и возвращает статус ответа.
 func (h *Handler) PingStorage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if h.service.PingStorage(ctx) {

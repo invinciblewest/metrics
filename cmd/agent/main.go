@@ -3,6 +3,12 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"os/signal"
+	"syscall"
+
 	"github.com/invinciblewest/metrics/internal/agent"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/config"
@@ -10,10 +16,6 @@ import (
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"go.uber.org/zap"
-	"log"
-	"net/http"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -23,6 +25,12 @@ func main() {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if cfg.Pprof {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
 	}
 
 	err = logger.Initialize(cfg.LogLevel)

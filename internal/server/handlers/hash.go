@@ -5,11 +5,12 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/invinciblewest/metrics/internal/logger"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/invinciblewest/metrics/internal/logger"
+	"go.uber.org/zap"
 )
 
 type responseRecorder struct {
@@ -22,6 +23,7 @@ func (r *responseRecorder) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
+// hashMiddleware создает middleware для проверки и добавления SHA256 хеша к запросам и ответам.
 func hashMiddleware(hashKey string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

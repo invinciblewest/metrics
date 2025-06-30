@@ -2,10 +2,11 @@ package collectors
 
 import (
 	"context"
+	"testing"
+
 	"github.com/invinciblewest/metrics/internal/storage/memstorage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestNewRuntimeCollector(t *testing.T) {

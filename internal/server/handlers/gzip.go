@@ -66,6 +66,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
+// gzipMiddleware создает middleware для сжатия и распаковки HTTP-запросов и ответов с использованием gzip.
 func gzipMiddleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
