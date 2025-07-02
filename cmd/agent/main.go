@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -18,7 +19,17 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	BuildVersion string
+	BuildDate    string
+	BuildCommit  string
+)
+
 func main() {
+	fmt.Println("Build version:", checkValue(BuildVersion))
+	fmt.Println("Build date:   ", checkValue(BuildDate))
+	fmt.Println("Build commit: ", checkValue(BuildCommit))
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
@@ -57,4 +68,11 @@ func main() {
 			logger.Log.Info("agent stopped")
 		}
 	}
+}
+
+func checkValue(val string) string {
+	if val == "" {
+		return "N/A"
+	}
+	return val
 }
