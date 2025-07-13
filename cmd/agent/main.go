@@ -32,7 +32,7 @@ func main() {
 	fmt.Println("Build date:   ", checkValue(BuildDate))
 	fmt.Println("Build commit: ", checkValue(BuildCommit))
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer cancel()
 
 	cfg, err := config.GetConfig()
