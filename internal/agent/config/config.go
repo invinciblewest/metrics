@@ -15,6 +15,7 @@ type Config struct {
 	HashKey        string `env:"KEY"`             // Ключ для хеширования метрик перед отправкой на сервер.
 	RateLimit      int    `env:"RATE_LIMIT"`      // Ограничение скорости отправки метрик на сервер (количество метрик в секунду).
 	Pprof          bool   `env:"PPROF"`           // Флаг, указывающий, нужно ли включать pprof для профилирования производительности.
+	CryptoKey      string `env:"CRYPTO_KEY"`      // Ключ для шифрования метрик перед отправкой на сервер.
 }
 
 // GetConfig считывает конфигурацию агента из флагов командной строки и переменных окружения.
@@ -28,6 +29,7 @@ func GetConfig() (Config, error) {
 	flag.StringVar(&config.HashKey, "k", "", "hash key")
 	flag.IntVar(&config.RateLimit, "L", 2, "rate limit")
 	flag.BoolVar(&config.Pprof, "pprof", false, "enable pprof")
+	flag.StringVar(&config.CryptoKey, "crypto-key", "", "path to crypto key for metrics encryption")
 	flag.Parse()
 
 	if err := env.Parse(&config); err != nil {

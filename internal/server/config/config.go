@@ -15,6 +15,7 @@ type Config struct {
 	Restore         bool   `env:"RESTORE"`           // Флаг, указывающий, нужно ли восстанавливать метрики из файла при запуске сервера.
 	DatabaseDSN     string `env:"DATABASE_DSN"`      // DSN (Data Source Name) для подключения к базе данных, если используется.
 	HashKey         string `env:"KEY"`               // Ключ для хеширования метрик и проверки их целостности.
+	CryptoKey       string `env:"CRYPTO_KEY"`        // Приватный ключ для проверки метрик от агента.
 }
 
 // GetConfig считывает конфигурацию сервера из флагов командной строки и переменных окружения.
@@ -28,6 +29,7 @@ func GetConfig() (Config, error) {
 	flag.BoolVar(&config.Restore, "r", true, "restore")
 	flag.StringVar(&config.DatabaseDSN, "d", "", "database dsn")
 	flag.StringVar(&config.HashKey, "k", "", "hash key")
+	flag.StringVar(&config.CryptoKey, "crypto-key", "", "path to crypto key for metrics encryption")
 	flag.Parse()
 
 	if err := env.Parse(&config); err != nil {

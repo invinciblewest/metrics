@@ -10,6 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/invinciblewest/metrics/pkg/encryption"
+
 	"github.com/invinciblewest/metrics/internal/agent"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/config"
@@ -55,9 +57,17 @@ func main() {
 		collectors.NewGopsutilCollector(st),
 	}
 
+	var cryptor *encryption.Cryptor
+	if cfg.CryptoKey != "" {
+		cryptor, err = encryption.NewCryptor(cfg.CryptoKey, "")
+		if err != nil {
+			logger.Log.Fatal("failed to initialize cryptor", zap.Error(err))
+		}
+	}
+
 	addr := "http://" + cfg.Address
 	sendersList := []senders.Sender{
-		senders.NewHTTPSender(addr, cfg.HashKey, http.DefaultClient),
+		senders.NewHTTPSender(addr, cfg.HashKey, http.DefaultClient, cryptor),
 	}
 
 	agentApp := agent.NewAgent(st, collectorsList, sendersList, cfg.PollInterval, cfg.ReportInterval)

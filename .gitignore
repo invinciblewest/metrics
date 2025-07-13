@@ -30,3 +30,5 @@ metricstest
 storage.json
 
 staticlint
+
+*.pem
