@@ -10,6 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/invinciblewest/metrics/pkg/encryption"
+
 	"github.com/invinciblewest/metrics/internal/agent"
 	"github.com/invinciblewest/metrics/internal/agent/collectors"
 	"github.com/invinciblewest/metrics/internal/agent/config"
@@ -30,7 +32,7 @@ func main() {
 	fmt.Println("Build date:   ", checkValue(BuildDate))
 	fmt.Println("Build commit: ", checkValue(BuildCommit))
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer cancel()
 
 	cfg, err := config.GetConfig()
@@ -55,9 +57,17 @@ func main() {
 		collectors.NewGopsutilCollector(st),
 	}
 
+	var cryptor *encryption.Cryptor
+	if cfg.CryptoKey != "" {
+		cryptor, err = encryption.NewCryptor(cfg.CryptoKey, "")
+		if err != nil {
+			logger.Log.Fatal("failed to initialize cryptor", zap.Error(err))
+		}
+	}
+
 	addr := "http://" + cfg.Address
 	sendersList := []senders.Sender{
-		senders.NewHTTPSender(addr, cfg.HashKey, http.DefaultClient),
+		senders.NewHTTPSender(addr, cfg.HashKey, http.DefaultClient, cryptor),
 	}
 
 	agentApp := agent.NewAgent(st, collectorsList, sendersList, cfg.PollInterval, cfg.ReportInterval)

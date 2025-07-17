@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/invinciblewest/metrics/pkg/encryption"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/models"
@@ -28,10 +30,11 @@ type HTTPSender struct {
 	hashKey    string
 	gzipPool   *sync.Pool
 	bufPool    *sync.Pool
+	cryptor    *encryption.Cryptor
 }
 
 // NewHTTPSender создает новый экземпляр HTTPSender с заданным адресом сервера, ключом хеширования и HTTP клиентом.
-func NewHTTPSender(serverAddr string, hashKey string, client *http.Client) *HTTPSender {
+func NewHTTPSender(serverAddr string, hashKey string, client *http.Client, cryptor *encryption.Cryptor) *HTTPSender {
 	restyClient := resty.New()
 	if client != nil {
 		restyClient.SetTransport(client.Transport)
@@ -73,6 +76,7 @@ func NewHTTPSender(serverAddr string, hashKey string, client *http.Client) *HTTP
 				return new(bytes.Buffer)
 			},
 		},
+		cryptor: cryptor,
 	}
 }
 
@@ -101,6 +105,18 @@ func (s *HTTPSender) SendMetric(ctx context.Context, metrics []models.Metric) er
 	}
 	if err = gz.Close(); err != nil {
 		return err
+	}
+
+	if s.cryptor != nil {
+		var encryptedData []byte
+		encryptedData, err = s.cryptor.Encrypt(buf.Bytes())
+		if err != nil {
+			return err
+		}
+		buf.Reset()
+		if _, err = buf.Write(encryptedData); err != nil {
+			return err
+		}
 	}
 
 	req := s.client.R().

@@ -1,0 +1,9 @@
+{
+    "address": "localhost:8080",
+    "restore": true,
+    "store_interval": "1s",
+    "store_file": "./storage.json",
+    "database_dsn": "",
+    "crypto_key": ""
+}
+

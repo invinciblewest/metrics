@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/invinciblewest/metrics/pkg/encryption"
+
 	"github.com/invinciblewest/metrics/internal/logger"
 	"github.com/invinciblewest/metrics/internal/server/config"
 	"github.com/invinciblewest/metrics/internal/server/handlers"
@@ -78,7 +80,7 @@ func main() {
 		}
 	}
 
-	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer stop()
 
 	if cfg.StoreInterval > 0 {
@@ -102,8 +104,16 @@ func main() {
 		}()
 	}
 
+	var cryptor *encryption.Cryptor
+	if cfg.CryptoKey != "" {
+		cryptor, err = encryption.NewCryptor("", cfg.CryptoKey)
+		if err != nil {
+			logger.Log.Fatal("failed to create cryptor", zap.Error(err))
+		}
+	}
+
 	handler := handlers.NewHandler(services.NewMetricsService(st))
-	router := handlers.GetRouter(handler, cfg.HashKey)
+	router := handlers.GetRouter(handler, cfg.HashKey, cryptor)
 
 	if err = run(ctx, cfg.Address, router); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Log.Fatal("server error", zap.Error(err))
