@@ -19,6 +19,11 @@ func DecryptBodyMiddleware(cryptor *Cryptor) func(next http.Handler) http.Handle
 				return
 			}
 
+			if len(encryptedBody) == 0 {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			var decryptedBody []byte
 			decryptedBody, err = cryptor.Decrypt(encryptedBody)
 			if err != nil {

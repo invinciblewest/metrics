@@ -75,5 +75,5 @@ func (c *Cryptor) Decrypt(cipherText []byte) ([]byte, error) {
 	if c.privateKey == nil {
 		return nil, ErrNoPrivateKey
 	}
-	return rsa.DecryptPKCS1v15(rand.Reader, c.privateKey, cipherText)
+	return rsa.DecryptPKCS1v15(nil, c.privateKey, cipherText)
 }
