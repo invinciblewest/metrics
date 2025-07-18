@@ -19,6 +19,7 @@ type Config struct {
 	DatabaseDSN     string `env:"DATABASE_DSN"`      // DSN (Data Source Name) для подключения к базе данных, если используется.
 	HashKey         string `env:"KEY"`               // Ключ для хеширования метрик и проверки их целостности.
 	CryptoKey       string `env:"CRYPTO_KEY"`        // Приватный ключ для проверки метрик от агента.
+	TrustedSubnet   string `env:"TRUSTED_SUBNET"`    // CIDR доверенной подсети.
 }
 
 // JSONConfig представляет структуру JSON файла конфигурации сервера
@@ -29,6 +30,7 @@ type JSONConfig struct {
 	StoreFile     string `json:"store_file"`
 	DatabaseDSN   string `json:"database_dsn"`
 	CryptoKey     string `json:"crypto_key"`
+	TrustedSubnet string `json:"trusted_subnet"`
 }
 
 // GetConfig считывает конфигурацию сервера из флагов командной строки и переменных окружения.
@@ -45,6 +47,7 @@ func GetConfig() (Config, error) {
 		DatabaseDSN:     "",
 		HashKey:         "",
 		CryptoKey:       "",
+		TrustedSubnet:   "",
 	}
 
 	flag.StringVar(&config.Address, "a", config.Address, "server address")
@@ -57,6 +60,7 @@ func GetConfig() (Config, error) {
 	flag.StringVar(&config.CryptoKey, "crypto-key", config.CryptoKey, "path to crypto key for metrics encryption")
 	flag.StringVar(&configFile, "c", "", "config file path")
 	flag.StringVar(&configFile, "config", "", "config file path")
+	flag.StringVar(&config.TrustedSubnet, "t", config.TrustedSubnet, "trusted subnet in CIDR format")
 	flag.Parse()
 
 	if configFile == "" {
@@ -112,5 +116,8 @@ func applyJSONConfig(config *Config, jsonConfig *JSONConfig) {
 	}
 	if jsonConfig.CryptoKey != "" {
 		config.CryptoKey = jsonConfig.CryptoKey
+	}
+	if jsonConfig.TrustedSubnet != "" {
+		config.TrustedSubnet = jsonConfig.TrustedSubnet
 	}
 }

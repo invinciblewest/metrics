@@ -104,6 +104,7 @@ func main() {
 		}()
 	}
 
+	handler := handlers.NewHandler(services.NewMetricsService(st))
 	var cryptor *encryption.Cryptor
 	if cfg.CryptoKey != "" {
 		cryptor, err = encryption.NewCryptor("", cfg.CryptoKey)
@@ -111,9 +112,7 @@ func main() {
 			logger.Log.Fatal("failed to create cryptor", zap.Error(err))
 		}
 	}
-
-	handler := handlers.NewHandler(services.NewMetricsService(st))
-	router := handlers.GetRouter(handler, cfg.HashKey, cryptor)
+	router := handlers.GetRouter(handler, cfg.HashKey, cryptor, cfg.TrustedSubnet)
 
 	if err = run(ctx, cfg.Address, router); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Log.Fatal("server error", zap.Error(err))

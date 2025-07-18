@@ -39,6 +39,7 @@ func TestHTTPSender_Send(t *testing.T) {
 				),
 				"",
 				nil,
+				"",
 			),
 		)
 		defer srv.Close()
