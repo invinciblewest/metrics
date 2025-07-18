@@ -373,5 +373,6 @@ func newRouter(st storage.Storage) http.Handler {
 		),
 		"",
 		nil,
+		"",
 	)
 }

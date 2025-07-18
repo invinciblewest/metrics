@@ -12,7 +12,7 @@ import (
 )
 
 // GetRouter создает и настраивает маршрутизатор Chi с заданным обработчиком.
-func GetRouter(handler *Handler, hashKey string, cryptor *encryption.Cryptor) *chi.Mux {
+func GetRouter(handler *Handler, hashKey string, cryptor *encryption.Cryptor, trustedSubnet string) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(logger.Middleware())
@@ -32,6 +32,7 @@ func GetRouter(handler *Handler, hashKey string, cryptor *encryption.Cryptor) *c
 		if cryptor != nil {
 			r.Use(encryption.DecryptBodyMiddleware(cryptor))
 		}
+		r.Use(trustedSubnetMiddleware(trustedSubnet))
 		r.Use(gzipMiddleware())
 		r.Post("/", handler.UpdateMetricsBatch)
 	})
@@ -39,6 +40,7 @@ func GetRouter(handler *Handler, hashKey string, cryptor *encryption.Cryptor) *c
 		if cryptor != nil {
 			r.Use(encryption.DecryptBodyMiddleware(cryptor))
 		}
+		r.Use(trustedSubnetMiddleware(trustedSubnet))
 		r.Use(gzipMiddleware())
 		r.Post("/", handler.UpdateMetricJSON)
 		r.Post("/{type}/{name}/{value}", handler.UpdateMetric)

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"sync"
@@ -119,10 +120,13 @@ func (s *HTTPSender) SendMetric(ctx context.Context, metrics []models.Metric) er
 		}
 	}
 
+	realIP := getLocalIP()
+
 	req := s.client.R().
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
 		SetHeader("Content-Type", "application/json").
+		SetHeader("X-Real-IP", realIP).
 		SetBody(buf.Bytes()).
 		SetContext(ctx)
 
@@ -132,7 +136,8 @@ func (s *HTTPSender) SendMetric(ctx context.Context, metrics []models.Metric) er
 		req.SetHeader("HashSHA256", base64.StdEncoding.EncodeToString(hash.Sum(nil)))
 	}
 
-	resp, err := req.Post(path)
+	var resp *resty.Response
+	resp, err = req.Post(path)
 
 	if err != nil {
 		return err
@@ -141,4 +146,18 @@ func (s *HTTPSender) SendMetric(ctx context.Context, metrics []models.Metric) er
 		return errors.New("wrong response code")
 	}
 	return nil
+}
+
+// getLocalIP возвращает первый не-loopback IPv4 адрес хоста
+func getLocalIP() string {
+	addresses, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, addr := range addresses {
+		if IPNet, ok := addr.(*net.IPNet); ok && !IPNet.IP.IsLoopback() && IPNet.IP.To4() != nil {
+			return IPNet.IP.String()
+		}
+	}
+	return ""
 }
